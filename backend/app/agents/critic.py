@@ -1,5 +1,6 @@
 import time
-from typing import Dict, Any
+from typing import Any
+
 from app.agents.base import BaseAgent
 from app.schemas.state import ResearchState
 
@@ -8,7 +9,7 @@ class CriticAgent(BaseAgent):
     def __init__(self):
         super().__init__(name="Critic Agent")
 
-    def run(self, state: ResearchState) -> Dict[str, Any]:
+    def run(self, state: ResearchState) -> dict[str, Any]:
         start_time = time.time()
         report = state.get("draft_report")
 

@@ -1,6 +1,7 @@
-from typing import List
+
 import httpx
 from loguru import logger
+
 from app.core.config import settings
 from app.schemas.source import GitHubRepoItem
 
@@ -11,7 +12,7 @@ class GitHubSearchService:
     def __init__(self):
         self.token = settings.GITHUB_TOKEN
 
-    def search_repositories(self, query: str, max_results: int = 5) -> List[GitHubRepoItem]:
+    def search_repositories(self, query: str, max_results: int = 5) -> list[GitHubRepoItem]:
         logger.info(f"Searching GitHub repositories for query: '{query}'")
         headers = {
             "Accept": "application/vnd.github.v3+json",
@@ -50,7 +51,7 @@ class GitHubSearchService:
                     return repos
                 else:
                     logger.warning(f"GitHub API status code: {resp.status_code}")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Error querying GitHub API: {e}")
 
         # Return empty list if query is non-technical or API search returned no items

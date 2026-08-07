@@ -1,5 +1,6 @@
-from typing import List
+
 from loguru import logger
+
 from app.core.config import settings
 from app.schemas.source import SourceDocument
 
@@ -14,7 +15,7 @@ class TavilySearchService:
         self.api_key = settings.TAVILY_API_KEY
         self.client = TavilyClient(api_key=self.api_key) if (TavilyClient and self.api_key and "your_" not in self.api_key) else None
 
-    def search_web(self, query: str, max_results: int = 5) -> List[SourceDocument]:
+    def search_web(self, query: str, max_results: int = 5) -> list[SourceDocument]:
         logger.info(f"Executing Tavily web search for query: '{query}'")
         if self.client:
             try:
@@ -34,12 +35,12 @@ class TavilySearchService:
                     )
                 if results:
                     return results
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.error(f"Tavily search failed: {e}. Returning verified web documentation sources.")
 
         return self._fallback_web_results(query, max_results)
 
-    def _fallback_web_results(self, query: str, max_results: int) -> List[SourceDocument]:
+    def _fallback_web_results(self, query: str, max_results: int) -> list[SourceDocument]:
         real_sources = [
             SourceDocument(
                 id="web_doc_1",
@@ -52,7 +53,7 @@ class TavilySearchService:
             ),
             SourceDocument(
                 id="web_doc_2",
-                title=f"HuggingFace Technical Report: Open-Source Models & Benchmarks",
+                title="HuggingFace Technical Report: Open-Source Models & Benchmarks",
                 content=f"Technical analysis covering model evaluation, parameter efficiency, context window scaling, and empirical benchmarks for {query}.",
                 source_type="web",
                 url="https://huggingface.co/docs/transformers/index",
@@ -61,8 +62,8 @@ class TavilySearchService:
             ),
             SourceDocument(
                 id="web_doc_3",
-                title=f"vLLM Production Serving & PagedAttention Optimization",
-                content=f"System architecture report on high-throughput KV-cache management, memory optimization, and inference acceleration.",
+                title="vLLM Production Serving & PagedAttention Optimization",
+                content="System architecture report on high-throughput KV-cache management, memory optimization, and inference acceleration.",
                 source_type="web",
                 url="https://docs.vllm.ai/en/latest/",
                 score=0.86,
@@ -70,8 +71,8 @@ class TavilySearchService:
             ),
             SourceDocument(
                 id="web_doc_4",
-                title=f"arXiv Computer Science & Artificial Intelligence Preprints",
-                content=f"Open-access archive of scholarly research papers in computer science, machine learning, and artificial intelligence.",
+                title="arXiv Computer Science & Artificial Intelligence Preprints",
+                content="Open-access archive of scholarly research papers in computer science, machine learning, and artificial intelligence.",
                 source_type="web",
                 url="https://arxiv.org/archive/cs",
                 score=0.85,
@@ -79,8 +80,8 @@ class TavilySearchService:
             ),
             SourceDocument(
                 id="web_doc_5",
-                title=f"PyTorch Production Deployment & Model Optimizations",
-                content=f"Official PyTorch documentation on distributed model parallel training, FSDP, and quantization strategies.",
+                title="PyTorch Production Deployment & Model Optimizations",
+                content="Official PyTorch documentation on distributed model parallel training, FSDP, and quantization strategies.",
                 source_type="web",
                 url="https://pytorch.org/docs/stable/index.html",
                 score=0.84,

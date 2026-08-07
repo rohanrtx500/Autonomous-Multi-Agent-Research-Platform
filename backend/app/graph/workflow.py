@@ -1,21 +1,22 @@
-from langgraph.graph import StateGraph, START, END
-from app.schemas.state import ResearchState
-from app.graph.nodes import (
-    planner_node,
-    paper_retrieval_node,
-    web_retrieval_node,
-    github_retrieval_node,
-    doc_retrieval_node,
-    synthesizer_node,
-    comparator_node,
-    gap_node,
-    exp_planner_node,
-    writer_node,
-    critic_node,
-    citation_node,
-    eval_node,
-)
+from langgraph.graph import END, START, StateGraph
+
 from app.graph.edges import should_continue_or_refine
+from app.graph.nodes import (
+    citation_node,
+    comparator_node,
+    critic_node,
+    doc_retrieval_node,
+    eval_node,
+    exp_planner_node,
+    gap_node,
+    github_retrieval_node,
+    paper_retrieval_node,
+    planner_node,
+    synthesizer_node,
+    web_retrieval_node,
+    writer_node,
+)
+from app.schemas.state import ResearchState
 
 
 def create_research_graph():

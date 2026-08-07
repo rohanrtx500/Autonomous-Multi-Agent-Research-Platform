@@ -1,13 +1,15 @@
 import time
-from typing import Dict, Any, Optional
+from typing import Any
+
 from loguru import logger
+
 from app.core.config import settings
 from app.schemas.evaluation import AgentExecutionLog
 
 try:
-    from langchain_openai import ChatOpenAI
-    from langchain_groq import ChatGroq
     from langchain_google_genai import ChatGoogleGenerativeAI
+    from langchain_groq import ChatGroq
+    from langchain_openai import ChatOpenAI
 except ImportError:
     ChatOpenAI = None
     ChatGroq = None
@@ -41,7 +43,7 @@ class BaseAgent:
                     max_retries=1,
                     request_timeout=8,
                 )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.warning(f"Could not initialize LLM provider '{settings.DEFAULT_MODEL_PROVIDER}': {e}. Falling back to rule-based generation.")
         return None
 
@@ -50,7 +52,7 @@ class BaseAgent:
         status: str,
         start_time: float,
         reasoning: str,
-        details: Optional[Dict[str, Any]] = None
+        details: dict[str, Any] | None = None
     ) -> AgentExecutionLog:
         elapsed_ms = round((time.time() - start_time) * 1000, 2)
         log = AgentExecutionLog(

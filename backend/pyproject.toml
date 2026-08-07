@@ -23,6 +23,9 @@ target-version = ['py312']
 line-length = 100
 target-version = "py312"
 
+[tool.ruff.lint]
+ignore = ["B008", "ASYNC230"]
+
 [tool.mypy]
 python_version = "3.12"
 warn_return_any = true

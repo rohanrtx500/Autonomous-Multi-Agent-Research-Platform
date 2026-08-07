@@ -1,5 +1,6 @@
 import time
-from typing import Dict, Any, List
+from typing import Any
+
 from app.agents.base import BaseAgent
 from app.schemas.research import ResearchReport
 from app.schemas.state import ResearchState
@@ -9,7 +10,7 @@ class WriterAgent(BaseAgent):
     def __init__(self):
         super().__init__(name="Writer Agent")
 
-    def run(self, state: ResearchState) -> Dict[str, Any]:
+    def run(self, state: ResearchState) -> dict[str, Any]:
         start_time = time.time()
         objective = state.get("objective", "Research Topic")
         papers = state.get("retrieved_papers", [])
@@ -68,7 +69,7 @@ class WriterAgent(BaseAgent):
                                 strategic_recommendations = [line.strip().lstrip("-*• ").strip() for line in rec_part.strip().split("\n") if line.strip()]
                             else:
                                 key_findings = [line.strip().lstrip("-*• ").strip() for line in rest3.strip().split("\n") if line.strip()]
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 self.log_execution("warning", start_time, f"LLM generation failed: {e}. Using domain-tailored text.")
 
         if not exec_summary:
@@ -201,7 +202,7 @@ class WriterAgent(BaseAgent):
             "agent_logs": [log]
         }
 
-    def _domain_tailored_findings(self, objective: str) -> List[str]:
+    def _domain_tailored_findings(self, objective: str) -> list[str]:
         obj_lower = objective.lower()
         if any(w in obj_lower for w in ["income", "ubi", "economic", "labor", "inflation", "market", "poverty", "policy", "tax"]):
             return [

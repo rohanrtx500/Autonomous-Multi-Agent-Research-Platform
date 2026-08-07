@@ -1,6 +1,7 @@
-import time
 import json
-from typing import Dict, Any, List
+import time
+from typing import Any
+
 from app.agents.base import BaseAgent
 from app.schemas.research import ExperimentRecommendation
 from app.schemas.state import ResearchState
@@ -10,7 +11,7 @@ class ExperimentPlannerAgent(BaseAgent):
     def __init__(self):
         super().__init__(name="Experiment Planner")
 
-    def run(self, state: ResearchState) -> Dict[str, Any]:
+    def run(self, state: ResearchState) -> dict[str, Any]:
         start_time = time.time()
         objective = state.get("objective", "Research Topic")
 
@@ -46,7 +47,7 @@ class ExperimentPlannerAgent(BaseAgent):
                             ])
                         )
                     )
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 self.log_execution("warning", start_time, f"LLM generation failed: {e}. Using domain-tailored experiment plan.")
 
         if not experiments:
@@ -65,7 +66,7 @@ class ExperimentPlannerAgent(BaseAgent):
             "agent_logs": [log]
         }
 
-    def _domain_tailored_experiments(self, objective: str) -> List[ExperimentRecommendation]:
+    def _domain_tailored_experiments(self, objective: str) -> list[ExperimentRecommendation]:
         obj_lower = objective.lower()
 
         if any(w in obj_lower for w in ["income", "ubi", "economic", "labor", "inflation", "market", "poverty", "policy", "tax"]):

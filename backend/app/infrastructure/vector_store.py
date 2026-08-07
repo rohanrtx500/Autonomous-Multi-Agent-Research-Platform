@@ -1,13 +1,13 @@
 import os
-from typing import List, Optional, Dict, Any
+
 from loguru import logger
+
 from app.core.config import settings
-from app.schemas.source import SourceDocument
 from app.infrastructure.bm25 import BM25Searcher
+from app.schemas.source import SourceDocument
 
 try:
     import chromadb
-    from chromadb.config import Settings as ChromaSettings
 except ImportError:
     chromadb = None
 
@@ -16,7 +16,7 @@ class VectorStoreService:
     def __init__(self, collection_name: str = "researchmind_docs"):
         self.collection_name = collection_name
         self.bm25_searcher = BM25Searcher()
-        self.in_memory_docs: List[SourceDocument] = []
+        self.in_memory_docs: list[SourceDocument] = []
         self.client = None
         self.collection = None
 
@@ -26,11 +26,11 @@ class VectorStoreService:
                 self.client = chromadb.PersistentClient(path=settings.CHROMA_PERSIST_DIR)
                 self.collection = self.client.get_or_create_collection(name=self.collection_name)
                 logger.info(f"Initialized ChromaDB persistent client at: {settings.CHROMA_PERSIST_DIR}")
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.warning(f"Failed to initialize ChromaDB persistent client: {e}. Falling back to memory vector store.")
                 self.client = None
 
-    def add_documents(self, documents: List[SourceDocument]):
+    def add_documents(self, documents: list[SourceDocument]):
         if not documents:
             return
 
@@ -52,16 +52,16 @@ class VectorStoreService:
                 ]
                 self.collection.add(ids=ids, documents=contents, metadatas=metadatas)
                 logger.info(f"Added {len(documents)} documents to ChromaDB collection")
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.error(f"Error adding documents to ChromaDB: {e}")
 
     def hybrid_search(
         self,
         query: str,
         top_k: int = 5,
-        source_type_filter: Optional[str] = None,
+        source_type_filter: str | None = None,
         alpha: float = 0.5
-    ) -> List[SourceDocument]:
+    ) -> list[SourceDocument]:
         """
         Hybrid search combining Dense vector similarity (ChromaDB) and BM25 Lexical search.
         alpha=1.0 uses purely vector search, alpha=0.0 uses purely BM25.
@@ -69,7 +69,7 @@ class VectorStoreService:
         bm25_results = self.bm25_searcher.search(query, top_k=top_k * 2)
         
         # Dense / ChromaDB results
-        chroma_docs: Dict[str, float] = {}
+        chroma_docs: dict[str, float] = {}
         if self.collection:
             try:
                 where_clause = {"source_type": source_type_filter} if source_type_filter else None
@@ -80,16 +80,16 @@ class VectorStoreService:
                 )
                 if query_res and query_res.get("ids"):
                     matched_ids = query_res["ids"][0]
-                    distances = query_res["distances"][0] if "distances" in query_res and query_res["distances"] else [0.5] * len(matched_ids)
+                    distances = query_res["distances"][0] if query_res.get("distances") else [0.5] * len(matched_ids)
                     for doc_id, dist in zip(matched_ids, distances):
                         # Convert distance to similarity score
                         chroma_docs[doc_id] = max(0.0, 1.0 - float(dist))
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.warning(f"ChromaDB search failed: {e}")
 
         # Combine scores using Reciprocal Rank Fusion / Weighted Sum
-        combined_scores: Dict[str, float] = {}
-        doc_map: Dict[str, SourceDocument] = {doc.id: doc for doc in self.in_memory_docs}
+        combined_scores: dict[str, float] = {}
+        doc_map: dict[str, SourceDocument] = {doc.id: doc for doc in self.in_memory_docs}
 
         # BM25 scores normalized
         max_bm25 = max([score for _, score in bm25_results], default=1.0) or 1.0

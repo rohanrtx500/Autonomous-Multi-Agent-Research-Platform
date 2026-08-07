@@ -1,5 +1,6 @@
 import time
-from typing import Dict, Any
+from typing import Any
+
 from app.agents.base import BaseAgent
 from app.schemas.evaluation import EvaluationMetrics
 from app.schemas.state import ResearchState
@@ -9,9 +10,9 @@ class EvaluationAgent(BaseAgent):
     def __init__(self):
         super().__init__(name="Evaluation Agent")
 
-    def run(self, state: ResearchState) -> Dict[str, Any]:
+    def run(self, state: ResearchState) -> dict[str, Any]:
         start_time = time.time()
-        report = state.get("draft_report")
+        state.get("draft_report")
         papers = state.get("retrieved_papers", [])
         critic = state.get("critic_feedback", "")
         citation = state.get("citation_verification", {})

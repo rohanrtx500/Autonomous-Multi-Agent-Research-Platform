@@ -1,6 +1,7 @@
-import time
 import json
-from typing import Dict, Any, List
+import time
+from typing import Any
+
 from app.agents.base import BaseAgent
 from app.schemas.research import ResearchGap
 from app.schemas.state import ResearchState
@@ -10,7 +11,7 @@ class ResearchGapAnalyzerAgent(BaseAgent):
     def __init__(self):
         super().__init__(name="Research Gap Analyzer")
 
-    def run(self, state: ResearchState) -> Dict[str, Any]:
+    def run(self, state: ResearchState) -> dict[str, Any]:
         start_time = time.time()
         objective = state.get("objective", "Research Topic")
 
@@ -40,7 +41,7 @@ class ResearchGapAnalyzerAgent(BaseAgent):
                             potential_impact=item.get("potential_impact", "Unlocks higher precision and domain understanding.")
                         )
                     )
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 self.log_execution("warning", start_time, f"LLM generation failed: {e}. Using domain-tailored gaps.")
 
         if not gaps:
@@ -59,7 +60,7 @@ class ResearchGapAnalyzerAgent(BaseAgent):
             "agent_logs": [log]
         }
 
-    def _domain_tailored_gaps(self, objective: str) -> List[ResearchGap]:
+    def _domain_tailored_gaps(self, objective: str) -> list[ResearchGap]:
         obj_lower = objective.lower()
 
         if any(w in obj_lower for w in ["income", "ubi", "economic", "labor", "inflation", "market", "poverty", "policy", "tax"]):
@@ -109,14 +110,14 @@ class ResearchGapAnalyzerAgent(BaseAgent):
             ResearchGap(
                 title=f"Long-Term Empirical Validation of {objective[:30]}...",
                 area="Domain Methodology",
-                description=f"Current literature lacks longitudinal datasets evaluating long-term systemic stability and performance metrics under extreme edge conditions.",
+                description="Current literature lacks longitudinal datasets evaluating long-term systemic stability and performance metrics under extreme edge conditions.",
                 severity="High",
                 potential_impact="Provides robust empirical verification required for policy, clinical, or production deployment."
             ),
             ResearchGap(
                 title="Cross-Domain Generalization & Scaling Constraints",
                 area="Systems Architecture",
-                description=f"Existing frameworks exhibit performance degradation when transferred from controlled benchmark environments to real-world heterogeneous settings.",
+                description="Existing frameworks exhibit performance degradation when transferred from controlled benchmark environments to real-world heterogeneous settings.",
                 severity="Medium",
                 potential_impact="Enables seamless scaling and deployment across diverse operational environments."
             )

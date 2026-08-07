@@ -1,8 +1,9 @@
 import time
-from typing import Dict, Any
+from typing import Any
+
 from app.agents.base import BaseAgent
-from app.services.tavily_service import TavilySearchService
 from app.schemas.state import ResearchState
+from app.services.tavily_service import TavilySearchService
 
 
 class WebResearchAgent(BaseAgent):
@@ -10,7 +11,7 @@ class WebResearchAgent(BaseAgent):
         super().__init__(name="Web Research Agent")
         self.tavily = TavilySearchService()
 
-    def run(self, state: ResearchState) -> Dict[str, Any]:
+    def run(self, state: ResearchState) -> dict[str, Any]:
         start_time = time.time()
         objective = state.get("objective", "")
 

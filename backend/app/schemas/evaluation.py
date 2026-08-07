@@ -1,4 +1,5 @@
-from typing import List, Dict, Any, Optional
+from typing import Any
+
 from pydantic import BaseModel, Field
 
 
@@ -10,7 +11,7 @@ class EvaluationMetrics(BaseModel):
     hallucination_risk: float = Field(default=0.0, ge=0.0, le=1.0)
     reasoning_quality: float = Field(default=0.0, ge=0.0, le=1.0)
     is_acceptable: bool = False
-    critique_comments: List[str] = Field(default_factory=list)
+    critique_comments: list[str] = Field(default_factory=list)
 
 
 class AgentExecutionLog(BaseModel):
@@ -19,4 +20,4 @@ class AgentExecutionLog(BaseModel):
     status: str
     execution_time_ms: float
     decision_reasoning: str
-    details: Dict[str, Any] = Field(default_factory=dict)
+    details: dict[str, Any] = Field(default_factory=dict)

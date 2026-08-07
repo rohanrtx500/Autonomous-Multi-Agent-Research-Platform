@@ -1,4 +1,5 @@
-from typing import Literal, Optional, List, Dict, Any
+from typing import Any, Literal
+
 from pydantic import BaseModel, Field
 
 
@@ -7,31 +8,31 @@ class SourceDocument(BaseModel):
     title: str
     content: str
     source_type: Literal["arxiv", "semantic_scholar", "web", "github", "user_doc"]
-    url: Optional[str] = None
-    author: Optional[str] = None
-    published_date: Optional[str] = None
+    url: str | None = None
+    author: str | None = None
+    published_date: str | None = None
     score: float = 1.0
-    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata: dict[str, Any] = Field(default_factory=dict)
 
 
 class PaperItem(BaseModel):
     id: str
     title: str
-    authors: List[str] = Field(default_factory=list)
-    published_year: Optional[int] = None
+    authors: list[str] = Field(default_factory=list)
+    published_year: int | None = None
     abstract: str
     url: str
-    pdf_url: Optional[str] = None
+    pdf_url: str | None = None
     citation_count: int = 0
-    venue: Optional[str] = None
+    venue: str | None = None
 
 
 class GitHubRepoItem(BaseModel):
     name: str
     full_name: str
-    description: Optional[str] = None
+    description: str | None = None
     url: str
     stars: int = 0
-    language: Optional[str] = None
-    topics: List[str] = Field(default_factory=list)
-    readme_snippet: Optional[str] = None
+    language: str | None = None
+    topics: list[str] = Field(default_factory=list)
+    readme_snippet: str | None = None

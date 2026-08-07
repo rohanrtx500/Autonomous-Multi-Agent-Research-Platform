@@ -1,39 +1,41 @@
 import os
-import uuid
 import time
-from typing import List, Dict, Any, Optional
-from fastapi import APIRouter, UploadFile, File, BackgroundTasks, HTTPException, Query
-from pydantic import BaseModel, Field
+import uuid
+from typing import Any
+
+from fastapi import APIRouter, File, HTTPException, Query, UploadFile
 from loguru import logger
-from app.schemas.state import ResearchState
+from pydantic import BaseModel, Field
+
 from app.graph.workflow import research_graph
-from app.infrastructure.vector_store import VectorStoreService
 from app.infrastructure.document_loader import DocumentLoaderService
+from app.infrastructure.vector_store import VectorStoreService
+from app.schemas.state import ResearchState
 
 router = APIRouter()
 vector_store = VectorStoreService()
 doc_loader = DocumentLoaderService()
 
 # In-memory storage for jobs telemetry
-JOBS_DB: Dict[str, ResearchState] = {}
+JOBS_DB: dict[str, ResearchState] = {}
 
 
 class ResearchRequest(BaseModel):
     objective: str
-    max_iterations: Optional[int] = 2
+    max_iterations: int | None = 2
 
 
 class ResearchResponse(BaseModel):
     job_id: str
     status: str
     objective: str
-    final_report_markdown: Optional[str] = None
-    evaluation_metrics: Optional[Dict[str, Any]] = None
+    final_report_markdown: str | None = None
+    evaluation_metrics: dict[str, Any] | None = None
     retrieved_papers_count: int = 0
     retrieved_web_count: int = 0
     retrieved_github_count: int = 0
     agent_logs_count: int = 0
-    agent_logs: List[Dict[str, Any]] = Field(default_factory=list)
+    agent_logs: list[dict[str, Any]] = Field(default_factory=list)
     execution_time_seconds: float = 0.0
 
 
@@ -89,9 +91,9 @@ async def start_research(request: ResearchRequest):
             agent_logs=logs_list,
             execution_time_seconds=elapsed,
         )
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.error(f"Research execution error for job {job_id}: {e}")
-        raise HTTPException(status_code=500, detail=f"Research graph execution failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Research graph execution failed: {e!s}")
 
 
 @router.post("/upload")
@@ -117,16 +119,16 @@ async def upload_document(file: UploadFile = File(...)):
             "chunks_ingested": len(docs),
             "message": f"Successfully ingested {file.filename} into knowledge base."
         }
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.error(f"Document ingestion failed for {file.filename}: {e}")
-        raise HTTPException(status_code=500, detail=f"Ingestion failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Ingestion failed: {e!s}")
     finally:
         if os.path.exists(temp_path):
             os.remove(temp_path)
 
 
 @router.get("/papers")
-async def get_papers(job_id: Optional[str] = Query(None)):
+async def get_papers(job_id: str | None = Query(None)):
     """
     Returns retrieved academic papers for a given research job.
     """
@@ -141,7 +143,7 @@ async def get_papers(job_id: Optional[str] = Query(None)):
 
 
 @router.get("/status")
-async def get_status(job_id: Optional[str] = Query(None)):
+async def get_status(job_id: str | None = Query(None)):
     """
     Returns system status and active job execution trace.
     """

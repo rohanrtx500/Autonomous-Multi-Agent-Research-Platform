@@ -1,6 +1,7 @@
 import os
-from typing import List, Dict, Any, Optional
+
 from loguru import logger
+
 from app.schemas.source import SourceDocument
 
 try:
@@ -24,7 +25,7 @@ class DocumentLoaderService:
         self.chunk_size = chunk_size
         self.chunk_overlap = chunk_overlap
 
-    def load_file(self, file_path: str, filename: Optional[str] = None) -> List[SourceDocument]:
+    def load_file(self, file_path: str, filename: str | None = None) -> list[SourceDocument]:
         if not os.path.exists(file_path):
             raise FileNotFoundError(f"File not found at path: {file_path}")
 
@@ -86,7 +87,7 @@ class DocumentLoaderService:
             )
         return documents
 
-    def chunk_text(self, text: str) -> List[str]:
+    def chunk_text(self, text: str) -> list[str]:
         if not text:
             return []
         chunks = []

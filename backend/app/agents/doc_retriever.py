@@ -1,5 +1,6 @@
 import time
-from typing import Dict, Any
+from typing import Any
+
 from app.agents.base import BaseAgent
 from app.infrastructure.vector_store import VectorStoreService
 from app.schemas.state import ResearchState
@@ -10,7 +11,7 @@ class DocRetrievalAgent(BaseAgent):
         super().__init__(name="Document Retrieval Agent")
         self.vector_store = vector_store or VectorStoreService()
 
-    def run(self, state: ResearchState) -> Dict[str, Any]:
+    def run(self, state: ResearchState) -> dict[str, Any]:
         start_time = time.time()
         objective = state.get("objective", "")
 

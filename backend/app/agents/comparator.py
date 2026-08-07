@@ -1,6 +1,7 @@
-import time
 import json
-from typing import Dict, Any, List
+import time
+from typing import Any
+
 from app.agents.base import BaseAgent
 from app.schemas.research import MethodComparison
 from app.schemas.state import ResearchState
@@ -10,16 +11,16 @@ class ComparisonAgent(BaseAgent):
     def __init__(self):
         super().__init__(name="Comparison Agent")
 
-    def run(self, state: ResearchState) -> Dict[str, Any]:
+    def run(self, state: ResearchState) -> dict[str, Any]:
         start_time = time.time()
         objective = state.get("objective", "Research Topic")
         papers = state.get("retrieved_papers", [])
-        web = state.get("retrieved_web_sources", [])
+        state.get("retrieved_web_sources", [])
 
         comparisons = []
         if self.llm:
             try:
-                context_str = f"Objective: {objective}\nSources: " + ", ".join([p.title for p in papers[:3]])
+                f"Objective: {objective}\nSources: " + ", ".join([p.title for p in papers[:3]])
                 prompt = (
                     f"Given the research objective: '{objective}', construct 3 method or paradigm comparisons relevant to this topic.\n"
                     f"Return ONLY a JSON list of objects with fields: method_name, category, advantages (list of 2 strings), disadvantages (list of 2 strings), datasets_used (list of 2 strings), performance_summary."
@@ -44,7 +45,7 @@ class ComparisonAgent(BaseAgent):
                             performance_summary=item.get("performance_summary", "Demonstrates statistically significant improvements in domain metrics.")
                         )
                     )
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 self.log_execution("warning", start_time, f"LLM generation failed: {e}. Using domain-tailored synthesis.")
 
         if not comparisons:
@@ -63,7 +64,7 @@ class ComparisonAgent(BaseAgent):
             "agent_logs": [log]
         }
 
-    def _domain_tailored_comparisons(self, objective: str) -> List[MethodComparison]:
+    def _domain_tailored_comparisons(self, objective: str) -> list[MethodComparison]:
         obj_lower = objective.lower()
         
         if any(w in obj_lower for w in ["income", "ubi", "economic", "labor", "inflation", "market", "poverty", "policy", "tax"]):
@@ -133,7 +134,7 @@ class ComparisonAgent(BaseAgent):
                 performance_summary="Demonstrates strong statistical significance and reliable performance across core benchmarks."
             ),
             MethodComparison(
-                method_name=f"Comparative Baseline Strategy",
+                method_name="Comparative Baseline Strategy",
                 category="Alternative Approach",
                 advantages=["Lower resource utilization", "Fast turnaround and implementation"],
                 disadvantages=["Lower boundary accuracy", "Higher variance across edge cases"],

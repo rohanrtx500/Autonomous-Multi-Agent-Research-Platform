@@ -1,14 +1,15 @@
 import xml.etree.ElementTree as ET
-from typing import List
+
 import httpx
 from loguru import logger
+
 from app.schemas.source import PaperItem
 
 
 class ArxivService:
     BASE_URL = "https://export.arxiv.org/api/query"
 
-    def search_papers(self, query: str, max_results: int = 5) -> List[PaperItem]:
+    def search_papers(self, query: str, max_results: int = 5) -> list[PaperItem]:
         logger.info(f"Searching arXiv papers for query: '{query}'")
         params = {
             "search_query": f"all:{query}",
@@ -27,12 +28,12 @@ class ArxivService:
                         return parsed
                 else:
                     logger.warning(f"arXiv API returned status code: {resp.status_code}")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Error querying arXiv API: {e}. Returning query-tailored paper references.")
 
         return self._fallback_papers(query, max_results)
 
-    def _parse_atom_feed(self, xml_text: str) -> List[PaperItem]:
+    def _parse_atom_feed(self, xml_text: str) -> list[PaperItem]:
         papers = []
         ns = {
             "atom": "http://www.w3.org/2005/Atom",
@@ -77,12 +78,12 @@ class ArxivService:
                         venue="arXiv",
                     )
                 )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Error parsing arXiv XML feed: {e}")
 
         return papers
 
-    def _fallback_papers(self, query: str, max_results: int) -> List[PaperItem]:
+    def _fallback_papers(self, query: str, max_results: int) -> list[PaperItem]:
         return [
             PaperItem(
                 id=f"arxiv_study_{i+1}",

@@ -1,5 +1,6 @@
 import time
-from typing import Dict, Any, List
+from typing import Any
+
 from app.agents.base import BaseAgent
 from app.schemas.state import ResearchState
 
@@ -8,7 +9,7 @@ class KnowledgeSynthesizerAgent(BaseAgent):
     def __init__(self):
         super().__init__(name="Knowledge Synthesizer")
 
-    def run(self, state: ResearchState) -> Dict[str, Any]:
+    def run(self, state: ResearchState) -> dict[str, Any]:
         start_time = time.time()
         objective = state.get("objective", "")
 
@@ -17,14 +18,14 @@ class KnowledgeSynthesizerAgent(BaseAgent):
         repos = state.get("retrieved_github_repos", [])
         user_docs = state.get("retrieved_user_docs", [])
 
-        themes: List[str] = [
+        themes: list[str] = [
             f"Foundations of {objective}",
-            f"State-of-the-Art Architectures & Algorithms",
-            f"Open-Source Ecosystem & Repositories",
-            f"Empirical Trade-offs & Performance Benchmarks",
+            "State-of-the-Art Architectures & Algorithms",
+            "Open-Source Ecosystem & Repositories",
+            "Empirical Trade-offs & Performance Benchmarks",
         ]
 
-        synthesized: Dict[str, Any] = {
+        synthesized: dict[str, Any] = {
             "objective": objective,
             "total_evidence_count": len(papers) + len(web) + len(repos) + len(user_docs),
             "key_themes": themes,
@@ -37,7 +38,7 @@ class KnowledgeSynthesizerAgent(BaseAgent):
             "top_insights": [
                 f"Academic literature highlights {len(papers)} key publications addressing multi-agent orchestration, scaling laws, and RAG optimization.",
                 f"Open-source GitHub repos reveal strong developer adoption with top repositories reaching over {max([r.stars for r in repos], default=100)} stars.",
-                f"Web documentation and production blogs emphasize latency-throughput trade-offs and robust fallback strategies."
+                "Web documentation and production blogs emphasize latency-throughput trade-offs and robust fallback strategies."
             ]
         }
 

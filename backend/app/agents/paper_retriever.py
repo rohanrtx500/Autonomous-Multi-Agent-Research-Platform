@@ -1,10 +1,10 @@
 import time
-from typing import List, Dict, Any
+from typing import Any
+
 from app.agents.base import BaseAgent
+from app.schemas.state import ResearchState
 from app.services.arxiv_service import ArxivService
 from app.services.semantic_scholar_service import SemanticScholarService
-from app.schemas.source import PaperItem
-from app.schemas.state import ResearchState
 
 
 class PaperRetrievalAgent(BaseAgent):
@@ -13,7 +13,7 @@ class PaperRetrievalAgent(BaseAgent):
         self.arxiv = ArxivService()
         self.semantic_scholar = SemanticScholarService()
 
-    def run(self, state: ResearchState) -> Dict[str, Any]:
+    def run(self, state: ResearchState) -> dict[str, Any]:
         start_time = time.time()
         objective = state.get("objective", "")
 

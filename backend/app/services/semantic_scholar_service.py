@@ -1,13 +1,14 @@
-from typing import List
+
 import httpx
 from loguru import logger
+
 from app.schemas.source import PaperItem
 
 
 class SemanticScholarService:
     BASE_URL = "https://api.semanticscholar.org/graph/v1/paper/search"
 
-    def search_papers(self, query: str, limit: int = 5) -> List[PaperItem]:
+    def search_papers(self, query: str, limit: int = 5) -> list[PaperItem]:
         logger.info(f"Searching Semantic Scholar papers for query: '{query}'")
         params = {
             "query": query,
@@ -39,12 +40,12 @@ class SemanticScholarService:
                         return papers
                 else:
                     logger.warning(f"Semantic Scholar API status code: {resp.status_code}")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Error querying Semantic Scholar API: {e}. Returning query-tailored paper references.")
 
         return self._fallback_papers(query, limit)
 
-    def _fallback_papers(self, query: str, limit: int) -> List[PaperItem]:
+    def _fallback_papers(self, query: str, limit: int) -> list[PaperItem]:
         return [
             PaperItem(
                 id=f"s2_study_{i+1}",

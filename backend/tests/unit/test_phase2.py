@@ -1,7 +1,5 @@
-import os
-import pytest
-from app.infrastructure.document_loader import DocumentLoaderService
 from app.infrastructure.bm25 import BM25Searcher
+from app.infrastructure.document_loader import DocumentLoaderService
 from app.infrastructure.vector_store import VectorStoreService
 from app.schemas.source import SourceDocument
 

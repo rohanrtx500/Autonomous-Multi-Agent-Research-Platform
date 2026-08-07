@@ -1,18 +1,19 @@
 import pytest
-from app.schemas.state import ResearchState
-from app.agents.planner import PlannerAgent
-from app.agents.paper_retriever import PaperRetrievalAgent
-from app.agents.web_retriever import WebResearchAgent
-from app.agents.github_retriever import GitHubResearchAgent
-from app.agents.doc_retriever import DocRetrievalAgent
-from app.agents.synthesizer import KnowledgeSynthesizerAgent
-from app.agents.comparator import ComparisonAgent
-from app.agents.gap_analyzer import ResearchGapAnalyzerAgent
-from app.agents.experiment_planner import ExperimentPlannerAgent
-from app.agents.writer import WriterAgent
-from app.agents.critic import CriticAgent
+
 from app.agents.citation_verifier import CitationVerificationAgent
+from app.agents.comparator import ComparisonAgent
+from app.agents.critic import CriticAgent
+from app.agents.doc_retriever import DocRetrievalAgent
 from app.agents.evaluator import EvaluationAgent
+from app.agents.experiment_planner import ExperimentPlannerAgent
+from app.agents.gap_analyzer import ResearchGapAnalyzerAgent
+from app.agents.github_retriever import GitHubResearchAgent
+from app.agents.paper_retriever import PaperRetrievalAgent
+from app.agents.planner import PlannerAgent
+from app.agents.synthesizer import KnowledgeSynthesizerAgent
+from app.agents.web_retriever import WebResearchAgent
+from app.agents.writer import WriterAgent
+from app.schemas.state import ResearchState
 
 
 @pytest.fixture

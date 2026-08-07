@@ -1,5 +1,5 @@
 import os
-from typing import Optional
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -9,13 +9,13 @@ class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
 
     # LLM Settings
-    OPENAI_API_KEY: Optional[str] = None
-    GROQ_API_KEY: Optional[str] = None
-    GEMINI_API_KEY: Optional[str] = None
+    OPENAI_API_KEY: str | None = None
+    GROQ_API_KEY: str | None = None
+    GEMINI_API_KEY: str | None = None
 
     # Search & Tool APIs
-    TAVILY_API_KEY: Optional[str] = None
-    GITHUB_TOKEN: Optional[str] = None
+    TAVILY_API_KEY: str | None = None
+    GITHUB_TOKEN: str | None = None
 
     # Storage Settings
     CHROMA_PERSIST_DIR: str = os.path.join(os.getcwd(), "data", "chroma")

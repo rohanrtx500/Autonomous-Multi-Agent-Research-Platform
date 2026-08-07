@@ -1,6 +1,7 @@
 import re
-from typing import List, Tuple
+
 from loguru import logger
+
 from app.schemas.source import SourceDocument
 
 try:
@@ -9,17 +10,17 @@ except ImportError:
     BM25Okapi = None
 
 
-def tokenize(text: str) -> List[str]:
+def tokenize(text: str) -> list[str]:
     return re.findall(r"\w+", text.lower())
 
 
 class BM25Searcher:
     def __init__(self):
-        self.documents: List[SourceDocument] = []
+        self.documents: list[SourceDocument] = []
         self.bm25: bool = None
-        self.corpus_tokens: List[List[str]] = []
+        self.corpus_tokens: list[list[str]] = []
 
-    def index_documents(self, docs: List[SourceDocument]):
+    def index_documents(self, docs: list[SourceDocument]):
         if not docs:
             return
         self.documents = docs
@@ -30,7 +31,7 @@ class BM25Searcher:
         else:
             logger.warning("rank_bm25 not installed, falling back to simple keyword matcher")
 
-    def search(self, query: str, top_k: int = 5) -> List[Tuple[SourceDocument, float]]:
+    def search(self, query: str, top_k: int = 5) -> list[tuple[SourceDocument, float]]:
         if not self.documents:
             return []
 
