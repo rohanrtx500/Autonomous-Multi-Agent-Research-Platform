@@ -1,0 +1,39 @@
+# Dependencies
+backend/venv/
+backend/venv*/
+frontend/node_modules/
+
+# Environment variables (NEVER commit secrets!)
+backend/.env
+frontend/.env.local
+frontend/.env
+
+# Build outputs
+frontend/.next/
+frontend/out/
+backend/build/
+backend/dist/
+*.egg-info/
+
+# Databases & local storage
+backend/data/
+backend/data/chroma/
+backend/temp_uploads/
+backend/logs/
+
+# Cache directories
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IDE & OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Test artifacts
+backend/test_download.txt
