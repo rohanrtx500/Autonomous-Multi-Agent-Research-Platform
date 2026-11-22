@@ -21,9 +21,10 @@ except ImportError:
 
 
 class DocumentLoaderService:
-    def __init__(self, chunk_size: int = 1500, chunk_overlap: int = 150):
+    def __init__(self, chunk_size: int = 2500, chunk_overlap: int = 200, max_chunks: int = 30):
         self.chunk_size = chunk_size
         self.chunk_overlap = chunk_overlap
+        self.max_chunks = max_chunks
 
     def load_file(self, file_path: str, filename: str | None = None) -> list[SourceDocument]:
         if not os.path.exists(file_path):
@@ -104,6 +105,27 @@ class DocumentLoaderService:
             raise ValueError(f"Extracted document text from {name} is insufficient or empty.")
 
         chunks = self.chunk_text(text_content)
+        total_extracted = len(chunks)
+
+        # Smart Stratified Sampling if chunks exceed max_chunks (protects free-tier memory and timeouts)
+        if len(chunks) > self.max_chunks:
+            logger.info(f"Document {name} generated {len(chunks)} chunks, stratifying to top {self.max_chunks} key chunks.")
+            front_k = self.max_chunks // 3
+            back_k = self.max_chunks // 3
+            mid_k = self.max_chunks - front_k - back_k
+
+            front_chunks = chunks[:front_k]
+            back_chunks = chunks[-back_k:] if back_k > 0 else []
+            mid_candidates = chunks[front_k:-back_k] if back_k > 0 else chunks[front_k:]
+
+            if mid_candidates and mid_k > 0:
+                step = max(1, len(mid_candidates) // mid_k)
+                mid_chunks = [mid_candidates[i] for i in range(0, len(mid_candidates), step)][:mid_k]
+            else:
+                mid_chunks = []
+
+            chunks = front_chunks + mid_chunks + back_chunks
+
         documents = []
         for idx, chunk in enumerate(chunks):
             doc_id = f"{name}_chunk_{idx}"
@@ -118,6 +140,7 @@ class DocumentLoaderService:
                         "file_name": name,
                         "chunk_index": idx,
                         "total_chunks": len(chunks),
+                        "extracted_chunks": total_extracted,
                         "file_size": os.path.getsize(file_path) if os.path.exists(file_path) else 0
                     }
                 )

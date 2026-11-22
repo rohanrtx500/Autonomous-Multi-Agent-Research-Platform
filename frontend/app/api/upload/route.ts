@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+export const maxDuration = 60;
+export const dynamic = 'force-dynamic';
+
 const PRODUCTION_BACKEND_URL = 'https://autonomous-multi-agent-research-platform.onrender.com/api/v1';
 
 function resolveBackendUrl(): string {

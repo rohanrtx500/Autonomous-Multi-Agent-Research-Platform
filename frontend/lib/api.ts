@@ -138,8 +138,8 @@ export async function uploadDocument(file: File): Promise<{ filename: string; ch
         } catch {
           // ignore
         }
-        // If the same-origin route returned 404 or 502, try the next endpoint
-        if (response.status === 404 || response.status === 502) {
+        // If the same-origin route returned 404, fall back to direct backend endpoint
+        if (response.status === 404) {
           lastError = new Error(errorDetail);
           continue;
         }
@@ -155,7 +155,7 @@ export async function uploadDocument(file: File): Promise<{ filename: string; ch
 
   if (lastError) {
     if (lastError.name === 'TypeError' || lastError.message === 'Failed to fetch' || lastError.message?.includes('Failed to fetch')) {
-      throw new Error(`Could not connect to ${apiBase}/upload. Please verify your backend server is awake and reachable.`);
+      throw new Error(`Upload timed out or could not connect to ${apiBase}/upload. The backend service may be waking up (cold start); please wait 30 seconds and try again.`);
     }
     throw lastError;
   }
