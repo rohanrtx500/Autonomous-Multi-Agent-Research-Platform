@@ -5,7 +5,7 @@ import time
 import uuid
 from typing import Any
 
-from fastapi import APIRouter, File, HTTPException, Query, UploadFile
+from fastapi import APIRouter, BackgroundTasks, File, HTTPException, Query, UploadFile
 from loguru import logger
 from pydantic import BaseModel, Field
 
@@ -167,7 +167,10 @@ async def cancel_job(job_id: str):
 
 
 @router.post("/upload")
-async def upload_document(file: UploadFile = File(...)):
+async def upload_document(
+    background_tasks: BackgroundTasks,
+    file: UploadFile = File(...)
+):
     """
     Secure document ingestion endpoint.
     Guarantees:
@@ -175,6 +178,8 @@ async def upload_document(file: UploadFile = File(...)):
     - Server-generated unique temporary filename.
     - File extension and magic byte validation.
     - Streaming byte size enforcement (prevents memory exhaustion).
+    - Instant BM25 registration and responsive HTTP 200 return (<1s).
+    - Asynchronous background embedding into persistent ChromaDB.
     - Guaranteed cleanup of only application-owned temp files.
     """
     if not file.filename:
@@ -227,20 +232,25 @@ async def upload_document(file: UploadFile = File(...)):
         elif ext in [".docx", ".pptx"] and not header_bytes.startswith(b"PK\x03\x04"):
             raise HTTPException(status_code=400, detail=f"Corrupted file: Expected valid Office Zip container for {ext}.")
 
-        # 5. Extract and index chunks into hybrid vector store off the main event loop
-        def _process_and_index():
+        # 5. Extract and index chunks into hybrid vector store
+        # Parse file and register in BM25 immediately so client receives instant 200 response (<1s)
+        def _parse_and_register():
             loaded_docs = doc_loader.load_file(resolved_path, filename=original_name)
             vector_store.delete_document(original_name)
-            vector_store.add_documents(loaded_docs)
-            return loaded_docs
+            new_docs = vector_store.index_documents_immediate(loaded_docs)
+            return loaded_docs, new_docs
 
-        docs = await asyncio.to_thread(_process_and_index)
+        loaded_docs, new_docs = await asyncio.to_thread(_parse_and_register)
+
+        # Offload persistent ChromaDB vector embeddings to background task to avoid HTTP timeout
+        if new_docs:
+            background_tasks.add_task(vector_store.persist_to_chroma, new_docs)
 
         return {
             "filename": original_name,
             "status": "success",
-            "chunks_ingested": len(docs),
-            "message": f"Successfully ingested {len(docs)} chunks from {original_name} into knowledge base."
+            "chunks_ingested": len(loaded_docs),
+            "message": f"Successfully ingested {len(loaded_docs)} chunks from {original_name} into knowledge base."
         }
     except HTTPException:
         raise

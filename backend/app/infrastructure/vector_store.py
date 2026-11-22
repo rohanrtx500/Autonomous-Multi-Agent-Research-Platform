@@ -63,47 +63,64 @@ class VectorStoreService:
         except Exception as e:  # noqa: BLE001
             logger.warning(f"Could not hydrate vector store from ChromaDB: {e}")
 
-    def add_documents(self, documents: list[SourceDocument]):
-        """Adds documents to both in-memory BM25 index and persistent ChromaDB collection."""
+    def index_documents_immediate(self, documents: list[SourceDocument]) -> list[SourceDocument]:
+        """
+        Immediately registers documents and updates the lexical BM25 index.
+        Executes in milliseconds so the HTTP response can return instantly.
+        """
         if not documents:
-            return
+            return []
 
-        # Deduplicate against current in-memory documents
         existing_ids = {doc.id for doc in self.in_memory_docs}
         new_docs = [doc for doc in documents if doc.id not in existing_ids]
 
         if not new_docs:
-            logger.info("All provided documents already exist in the vector store.")
-            return
+            logger.info("All provided documents already exist in the in-memory registry.")
+            return []
 
         self.in_memory_docs.extend(new_docs)
         self.bm25_searcher.index_documents(self.in_memory_docs)
+        logger.info(f"Indexed {len(new_docs)} documents into in-memory BM25 registry.")
+        return new_docs
 
-        if self.collection:
-            try:
-                ids = [doc.id for doc in new_docs]
-                contents = [doc.content for doc in new_docs]
-                metadatas = [
-                    {
-                        "title": doc.title,
-                        "file_name": doc.metadata.get("file_name", doc.title),
-                        "source_type": doc.source_type,
-                        "url": doc.url or "",
-                        "author": doc.author or "",
-                    }
-                    for doc in new_docs
-                ]
-                batch_size = 5
-                for i in range(0, len(ids), batch_size):
-                    b_ids = ids[i : i + batch_size]
-                    b_contents = contents[i : i + batch_size]
-                    b_metas = metadatas[i : i + batch_size]
-                    self.collection.add(ids=b_ids, documents=b_contents, metadatas=b_metas)
-                    import gc
-                    gc.collect()
-                logger.info(f"Successfully committed {len(new_docs)} documents to ChromaDB collection.")
-            except Exception as e:  # noqa: BLE001
-                logger.warning(f"ChromaDB batch embedding warning: {e}. Documents remain indexed in BM25 lexical store.")
+    def persist_to_chroma(self, new_docs: list[SourceDocument]):
+        """
+        Batches and commits document chunks to persistent ChromaDB with vector embeddings.
+        Designed to run safely in background tasks without blocking HTTP requests.
+        """
+        if not self.collection or not new_docs:
+            return
+
+        try:
+            ids = [doc.id for doc in new_docs]
+            contents = [doc.content for doc in new_docs]
+            metadatas = [
+                {
+                    "title": doc.title,
+                    "file_name": doc.metadata.get("file_name", doc.title),
+                    "source_type": doc.source_type,
+                    "url": doc.url or "",
+                    "author": doc.author or "",
+                }
+                for doc in new_docs
+            ]
+            batch_size = 5
+            for i in range(0, len(ids), batch_size):
+                b_ids = ids[i : i + batch_size]
+                b_contents = contents[i : i + batch_size]
+                b_metas = metadatas[i : i + batch_size]
+                self.collection.add(ids=b_ids, documents=b_contents, metadatas=b_metas)
+                import gc
+                gc.collect()
+            logger.info(f"Successfully committed {len(new_docs)} documents to ChromaDB collection.")
+        except Exception as e:  # noqa: BLE001
+            logger.warning(f"ChromaDB batch embedding warning: {e}. Documents remain indexed in BM25 lexical store.")
+
+    def add_documents(self, documents: list[SourceDocument]):
+        """Adds documents synchronously to both in-memory BM25 index and persistent ChromaDB collection."""
+        new_docs = self.index_documents_immediate(documents)
+        if new_docs:
+            self.persist_to_chroma(new_docs)
 
     def hybrid_search(
         self,
