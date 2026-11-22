@@ -27,6 +27,10 @@ class ResearchGapAnalyzerAgent(BaseAgent):
                 prompt = (
                     f"You are a Senior Strategic Researcher. For the topic: '{objective}', "
                     f"identify 2-3 critical gaps, unresolved friction points, or open analytical challenges.\n\n"
+                    f"CRITICAL DOMAIN DIRECTIVE:\n"
+                    f"Focus EXCLUSIVELY on the actual subject matter of '{objective}'.\n"
+                    f"Do NOT drift into AI, machine learning, deep learning, or computer science unless the topic explicitly asks about technology.\n"
+                    f"Ground open questions in genuine domain context (e.g., social, cultural, medical, historical, or economic).\n\n"
                     f"Available Reference Context:\n{evidence_summary}\n\n"
                     f"Return ONLY a JSON list of objects with fields:\n"
                     f"- title: (string, descriptive title of the gap or challenge)\n"

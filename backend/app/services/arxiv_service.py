@@ -67,10 +67,12 @@ class ArxivService:
                 title = title_elem.text.strip().replace("\n", " ") if title_elem is not None and title_elem.text else "Untitled Paper"
                 abstract = summary_elem.text.strip().replace("\n", " ") if summary_elem is not None and summary_elem.text else ""
 
-                # Relevance check: if query has significant keywords, ensure at least one is present in title or abstract
+                # Relevance check: require multi-keyword alignment to eliminate false matches on single generic words
                 if query_keywords:
                     combined_text = f"{title} {abstract}".lower()
-                    if not any(kw in combined_text for kw in query_keywords):
+                    matched_kw = [kw for kw in query_keywords if kw in combined_text]
+                    min_matches = 2 if len(query_keywords) >= 2 else 1
+                    if len(matched_kw) < min_matches:
                         continue
 
                 year = None

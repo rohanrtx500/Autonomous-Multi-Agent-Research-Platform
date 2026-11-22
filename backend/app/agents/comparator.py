@@ -32,6 +32,10 @@ class ComparisonAgent(BaseAgent):
                 prompt = (
                     f"You are a Senior Comparative Analyst. For the research topic: '{objective}', "
                     f"construct 3 distinct comparative dimensions or contrasting perspectives.\n\n"
+                    f"CRITICAL DOMAIN DIRECTIVE:\n"
+                    f"Focus EXCLUSIVELY on the actual subject matter of '{objective}'.\n"
+                    f"Do NOT drift into AI, machine learning, deep learning, or software unless the topic explicitly asks about technology.\n"
+                    f"If the topic is about culture, lifestyle, politics, medicine, history, or society, compare those exact real-world human/social dimensions.\n\n"
                     f"Available Reference Evidence:\n{evidence_summary}\n\n"
                     f"Return ONLY a JSON list of 3 objects with exact fields:\n"
                     f"- method_name: (string, name of the dimension, strategy, or paradigm being compared, e.g. 'Daily Work-Life & Corporate Culture' or 'Healthcare & Social Safety Net')\n"

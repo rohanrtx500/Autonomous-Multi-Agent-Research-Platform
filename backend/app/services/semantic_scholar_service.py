@@ -40,10 +40,12 @@ class SemanticScholarService:
                         title = item.get("title", "Untitled")
                         abstract = item.get("abstract") or ""
 
-                        # Relevance check: if query has keywords, ensure at least one matches
+                        # Relevance check: require multi-keyword alignment to eliminate false matches on single generic words
                         if query_keywords:
                             combined = f"{title} {abstract}".lower()
-                            if not any(kw in combined for kw in query_keywords):
+                            matched_kw = [kw for kw in query_keywords if kw in combined]
+                            min_matches = 2 if len(query_keywords) >= 2 else 1
+                            if len(matched_kw) < min_matches:
                                 continue
 
                         authors = [a.get("name", "") for a in item.get("authors", []) if a.get("name")]

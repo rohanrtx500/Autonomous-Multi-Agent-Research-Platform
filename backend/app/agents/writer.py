@@ -44,6 +44,10 @@ class WriterAgent(BaseAgent):
                     f"You are a Senior Principal Research Scientist and authoritative domain expert.\n"
                     f"Write an exhaustive, deeply descriptive, publication-grade research report on the topic:\n"
                     f"'{objective}'\n\n"
+                    f"CRITICAL DOMAIN GROUNDING DIRECTIVE:\n"
+                    f"- Ground your entire analysis 100% EXCLUSIVELY in the specific domain of '{objective}'.\n"
+                    f"- Do NOT drift into artificial intelligence, machine learning, deep learning, computer science, or software engineering unless the objective is explicitly about technology/software.\n"
+                    f"- If the topic is about lifestyle, culture, history, society, economics, medicine, or environment, analyze those exact human, social, historical, or physical dimensions using authentic domain terminology.\n\n"
                     f"Verified Empirical Context & Reference Literature:\n"
                     f"{sources_context}\n\n"
                     f"Provide a deep, multi-paragraph analysis covering all qualitative and quantitative nuances.\n"
@@ -159,8 +163,14 @@ class WriterAgent(BaseAgent):
         for k in key_findings:
             md += f"- {k}\n"
 
-        md += "\n## 5. Methodological & Architecture Comparison Matrix (Comparative Interpretations)\n\n"
-        md += "| Comparative Dimension | Analytical Category | Key Advantages / Strengths | Operational Limitations / Friction | Performance Benchmark Summary |\n"
+        is_tech = any(w in objective.lower() for w in [
+            "code", "software", "algorithm", "model", "neural", "deep learning", "machine learning",
+            "framework", "api", "architecture", "database", "pipeline", "backend", "frontend", "llm"
+        ])
+
+        section5_title = "Methodological & Architecture Comparison Matrix" if is_tech else "Comparative Dimensions & Analysis Matrix"
+        md += f"\n## 5. {section5_title}\n\n"
+        md += "| Comparative Dimension | Domain Category | Key Strengths & Advantages | Friction Points & Trade-Offs | Analytical Synthesis Summary |\n"
         md += "| --- | --- | --- | --- | --- |\n"
         for c in comparisons:
             adv = ", ".join(c.advantages[:2])
@@ -174,22 +184,26 @@ class WriterAgent(BaseAgent):
             md += f"- **Detailed Analysis**: {g.description}\n"
             md += f"- **Systemic Impact**: {g.potential_impact}\n\n"
 
-        md += "## 7. Proposed Experimental Benchmarks & Empirical Hypotheses\n\n"
+        section7_title = "Proposed Empirical Benchmarks & Evaluation Protocols" if is_tech else "Proposed Investigative Protocols & Analytical Benchmarks"
+        cohort_label = "Baseline Models" if is_tech else "Comparison Cohorts / Reference Baselines"
+        md += f"## 7. {section7_title}\n\n"
         for i, exp in enumerate(experiments, 1):
-            md += f"### 7.{i} Empirical Protocol: {exp.title}\n"
+            md += f"### 7.{i} Study Protocol: {exp.title}\n"
             md += f"**Core Hypothesis**: {exp.hypothesis}\n\n"
-            md += f"**Recommended Evaluation Metrics**: {', '.join(exp.recommended_metrics)}\n\n"
-            md += "**Step-by-Step Execution Roadmap**:\n"
+            md += f"**Recommended Evaluation Indicators**: {', '.join(exp.recommended_metrics)}\n\n"
+            if exp.baseline_models:
+                md += f"**{cohort_label}**: {', '.join(exp.baseline_models)}\n\n"
+            md += "**Step-by-Step Investigation Roadmap**:\n"
             for step_num, step in enumerate(exp.step_by_step_plan, 1):
                 md += f"{step_num}. {step}\n"
             md += "\n"
 
         md += "## 8. Strategic Implementation Roadmap & Practical Guidance\n\n"
         phases = [
-            "Phase 1: Baseline Calibration & Pre-Transition Assessment",
-            "Phase 2: Execution & Operational Integration",
-            "Phase 3: Impact Analysis & Long-Term Optimization",
-            "Phase 4: Ongoing Governance & Community Grounding"
+            "Phase 1: Baseline Assessment & Contextual Understanding",
+            "Phase 2: Active Implementation & Operational Adaptation",
+            "Phase 3: Impact Evaluation & Long-Term Optimization",
+            "Phase 4: Ongoing Monitoring & Community Grounding"
         ]
         for idx, rec in enumerate(strategic_recommendations):
             phase_label = phases[idx] if idx < len(phases) else f"Recommendation {idx+1}"

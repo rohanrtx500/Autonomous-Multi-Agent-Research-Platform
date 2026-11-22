@@ -27,6 +27,10 @@ class ExperimentPlannerAgent(BaseAgent):
                 prompt = (
                     f"You are a Research Director designing investigative methodologies or empirical studies.\n"
                     f"For the topic: '{objective}', design 1-2 rigorous research protocols or comparative investigative studies.\n\n"
+                    f"CRITICAL DOMAIN DIRECTIVE:\n"
+                    f"Design research studies tailored strictly to '{objective}'.\n"
+                    f"For social, cultural, medical, historical, or economic topics, design field surveys, observational studies, or comparative statistical evaluations—NOT machine learning experiments.\n"
+                    f"Do NOT drift into AI/ML/DL terminology unless the objective is explicitly about software/AI.\n\n"
                     f"Available Reference Context:\n{evidence_summary}\n\n"
                     f"Return ONLY a JSON list of objects with fields:\n"
                     f"- title: (string, descriptive title of the study or experimental protocol)\n"
