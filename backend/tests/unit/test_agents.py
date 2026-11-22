@@ -13,6 +13,7 @@ from app.agents.planner import PlannerAgent
 from app.agents.synthesizer import KnowledgeSynthesizerAgent
 from app.agents.web_retriever import WebResearchAgent
 from app.agents.writer import WriterAgent
+from app.schemas.source import PaperItem
 from app.schemas.state import ResearchState
 
 
@@ -89,15 +90,25 @@ def test_writer_critic_evaluator_agents(base_state):
     citation = CitationVerificationAgent()
     evaluator = EvaluationAgent()
 
-    s1 = writer.run(base_state)
+    # Provide retrieved papers simulating real pipeline execution
+    sample_paper = PaperItem(
+        id="p1",
+        title="Outrageously Large Neural Networks: The Sparsely-Gated Mixture-of-Experts Layer",
+        authors=["Shazeer et al."],
+        abstract="Mixture of Experts conditionally routes inputs to specialized sub-networks, achieving high capacity with sub-linear compute.",
+        url="https://arxiv.org/abs/1701.06538"
+    )
+    state_with_data = {**base_state, "retrieved_papers": [sample_paper]}
+
+    s1 = writer.run(state_with_data)
     assert s1["draft_report"] is not None
 
-    s2 = critic.run(s1)
+    s2 = critic.run({**state_with_data, **s1})
     assert s2["critic_feedback"] is not None
 
-    s3 = citation.run(s2)
+    s3 = citation.run({**state_with_data, **s1, **s2})
     assert s3["citation_verification"] is not None
 
-    s4 = evaluator.run(s3)
+    s4 = evaluator.run({**state_with_data, **s1, **s2, **s3})
     assert s4["evaluation_metrics"] is not None
     assert s4["evaluation_metrics"].confidence_score > 0.0

@@ -11,7 +11,7 @@ class KnowledgeSynthesizerAgent(BaseAgent):
 
     def run(self, state: ResearchState) -> dict[str, Any]:
         start_time = time.time()
-        objective = state.get("objective", "")
+        objective = state.get("objective", "Research Objective")
 
         papers = state.get("retrieved_papers", [])
         web = state.get("retrieved_web_sources", [])
@@ -19,11 +19,27 @@ class KnowledgeSynthesizerAgent(BaseAgent):
         user_docs = state.get("retrieved_user_docs", [])
 
         themes: list[str] = [
-            f"Foundations of {objective}",
-            "State-of-the-Art Architectures & Algorithms",
-            "Open-Source Ecosystem & Repositories",
-            "Empirical Trade-offs & Performance Benchmarks",
+            f"Core Dimensions & Foundations of {objective}",
+            "Comparative Dynamics & Empirical Perspectives",
+            "Socioeconomic & Practical Real-World Implications",
+            "Key Trade-Offs & Open Questions",
         ]
+
+        top_insights = []
+        if web:
+            top_insights.append(
+                f"Web evidence highlights {len(web)} authoritative sources discussing real-world experiences, practical benchmarks, and contemporary insights."
+            )
+        if papers:
+            top_insights.append(
+                f"Academic literature provides {len(papers)} formal research studies investigating underlying causal factors and systematic indicators."
+            )
+        if user_docs:
+            top_insights.append(
+                f"Internal knowledge base contributes {len(user_docs)} specialized reference excerpts."
+            )
+        if not top_insights:
+            top_insights.append(f"Synthesizing qualitative and quantitative indicators for '{objective}'.")
 
         synthesized: dict[str, Any] = {
             "objective": objective,
@@ -35,17 +51,13 @@ class KnowledgeSynthesizerAgent(BaseAgent):
                 "github_repos_count": len(repos),
                 "user_documents_count": len(user_docs),
             },
-            "top_insights": [
-                f"Academic literature highlights {len(papers)} key publications addressing multi-agent orchestration, scaling laws, and RAG optimization.",
-                f"Open-source GitHub repos reveal strong developer adoption with top repositories reaching over {max([r.stars for r in repos], default=100)} stars.",
-                "Web documentation and production blogs emphasize latency-throughput trade-offs and robust fallback strategies."
-            ]
+            "top_insights": top_insights
         }
 
         log = self.log_execution(
             status="completed",
             start_time=start_time,
-            reasoning=f"Synthesized evidence from {synthesized['total_evidence_count']} sources across 4 data streams.",
+            reasoning=f"Synthesized evidence from {synthesized['total_evidence_count']} sources across active data streams.",
             details={"themes_count": len(themes)}
         )
 

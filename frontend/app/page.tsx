@@ -225,6 +225,7 @@ export default function WorkspacePage() {
         <div className="lg:col-span-2 space-y-5">
           <MetricsCard
             metrics={researchData?.evaluation_metrics}
+            citationVerification={researchData?.citation_verification}
           />
 
           <ReportViewer

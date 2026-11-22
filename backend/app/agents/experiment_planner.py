@@ -1,4 +1,5 @@
 import json
+import re
 import time
 from typing import Any
 
@@ -14,49 +15,68 @@ class ExperimentPlannerAgent(BaseAgent):
     def run(self, state: ResearchState) -> dict[str, Any]:
         start_time = time.time()
         objective = state.get("objective", "Research Topic")
+        papers = state.get("retrieved_papers", [])
+        web = state.get("retrieved_web_sources", [])
+
+        context_snippets = [w.content[:200] for w in web[:3]] + [p.abstract[:200] for p in papers[:2]]
+        evidence_summary = "\n".join(context_snippets)
 
         experiments = []
         if self.llm:
             try:
                 prompt = (
-                    f"Design 2 rigorous empirical experiment recommendations to evaluate: '{objective}'.\n"
-                    f"Return ONLY a JSON list of objects with fields: title, hypothesis, recommended_datasets (list of 2-3 strings), recommended_metrics (list of 2-3 strings), baseline_models (list of 2 strings), step_by_step_plan (list of 4 strings)."
+                    f"You are a Research Director designing investigative methodologies or empirical studies.\n"
+                    f"For the topic: '{objective}', design 1-2 rigorous research protocols or comparative investigative studies.\n\n"
+                    f"Available Reference Context:\n{evidence_summary}\n\n"
+                    f"Return ONLY a JSON list of objects with fields:\n"
+                    f"- title: (string, descriptive title of the study or experimental protocol)\n"
+                    f"- hypothesis: (string, the core hypothesis or premise to test)\n"
+                    f"- recommended_datasets: (list of 2-3 strings, e.g. 'Pew Research Survey', 'Cost of Living Index', 'BLS Time Use Survey')\n"
+                    f"- recommended_metrics: (list of 2-3 strings, e.g. 'Discretionary Time Per Day', 'Purchasing Power Parity Index')\n"
+                    f"- baseline_models: (list of 2 strings, e.g. 'Cohort A (US Metros)', 'Cohort B (Tier-1 Indian Metros)')\n"
+                    f"- step_by_step_plan: (list of 4 strings outlining chronological methodology)\n\n"
+                    f"Respond with JSON only:"
                 )
                 res = self.llm.invoke(prompt)
-                content = res.content if hasattr(res, 'content') else str(res)
-                cleaned = content.strip()
-                if cleaned.startswith("```json"):
+                raw_text = self.extract_text(res)
+
+                cleaned = raw_text.strip()
+                if "```json" in cleaned:
                     cleaned = cleaned.split("```json")[1].split("```")[0].strip()
-                elif cleaned.startswith("```"):
+                elif "```" in cleaned:
                     cleaned = cleaned.split("```")[1].split("```")[0].strip()
+
+                match = re.search(r"\[\s*\{.*\}\s*\]", cleaned, re.DOTALL)
+                if match:
+                    cleaned = match.group(0)
 
                 parsed = json.loads(cleaned)
                 for item in parsed:
                     experiments.append(
                         ExperimentRecommendation(
                             title=item.get("title", "Empirical Evaluation Protocol"),
-                            hypothesis=item.get("hypothesis", "Proposed strategy yields statistically significant improvements."),
-                            recommended_datasets=item.get("recommended_datasets", ["Dataset A", "Benchmark Dataset B"]),
-                            recommended_metrics=item.get("recommended_metrics", ["Primary Metric", "Efficiency Ratio"]),
-                            baseline_models=item.get("baseline_models", ["Standard Baseline", "Alternative Method"]),
+                            hypothesis=item.get("hypothesis", "Comparative analysis reveals statistically significant divergence in core indicators."),
+                            recommended_datasets=item.get("recommended_datasets", ["Primary Field Survey", "National Statistical Index"]),
+                            recommended_metrics=item.get("recommended_metrics", ["Satisfaction Index", "Cost Efficiency"]),
+                            baseline_models=item.get("baseline_models", ["Primary Group Baseline", "Comparative Cohort"]),
                             step_by_step_plan=item.get("step_by_step_plan", [
-                                "Formulate baseline test conditions.",
-                                "Gather domain observational and trial datasets.",
-                                "Compute evaluation metrics across sample groups.",
-                                "Statistical significance testing and risk analysis."
+                                "Formulate baseline test conditions and sample stratifications.",
+                                "Gather multi-source observational datasets across targeted cohorts.",
+                                "Normalize metrics against regional economic baselines.",
+                                "Conduct difference analysis and validate significance."
                             ])
                         )
                     )
             except Exception as e:  # noqa: BLE001
-                self.log_execution("warning", start_time, f"LLM generation failed: {e}. Using domain-tailored experiment plan.")
+                self.log_execution("warning", start_time, f"LLM experiment planning failed: {e}. Using dynamic study design.")
 
         if not experiments:
-            experiments = self._domain_tailored_experiments(objective)
+            experiments = self._dynamic_experiments(objective)
 
         log = self.log_execution(
             status="completed",
             start_time=start_time,
-            reasoning=f"Designed {len(experiments)} rigorous empirical experiments to validate hypotheses for '{objective}'.",
+            reasoning=f"Designed {len(experiments)} empirical research protocols to evaluate '{objective}'.",
             details={"experiment_count": len(experiments)}
         )
 
@@ -66,51 +86,38 @@ class ExperimentPlannerAgent(BaseAgent):
             "agent_logs": [log]
         }
 
-    def _domain_tailored_experiments(self, objective: str) -> list[ExperimentRecommendation]:
+    def _dynamic_experiments(self, objective: str) -> list[ExperimentRecommendation]:
         obj_lower = objective.lower()
 
-        if any(w in obj_lower for w in ["income", "ubi", "economic", "labor", "inflation", "market", "poverty", "policy", "tax"]):
+        if any(w in obj_lower for w in ["lifestyle", "usa", "india", "culture", "living", "cost", "work-life", "society"]):
             return [
                 ExperimentRecommendation(
-                    title="Multi-Tiered Unconditional Cash Transfer Trial with Synthetic Controls",
-                    hypothesis="Unconditional monthly transfers ($1,000/mo) increase entrepreneurship and education enrollment without causing local CPI inflation >0.5%.",
-                    recommended_datasets=["Census Bureau CPS Data", "Local Consumer Price Index (CPI) Panel", "State Tax Return Datasets"],
-                    recommended_metrics=["Labor Supply Elasticity", "Consumer Price Index Variance", "Net Business Formation Rate"],
-                    baseline_models=["Means-Tested Welfare Baseline", "Unconditional Transfer Cohort"],
+                    title="Cross-National Time-Use and Subjective Well-Being Longitudinal Study",
+                    hypothesis="Professionals in the US allocate higher discrete daily hours to independent domestic chores and commuting, whereas Indian urban professionals leverage informal service economies to preserve family and social connectivity despite longer official office hours.",
+                    recommended_datasets=["BLS American Time Use Survey", "NSSO India Time Use Survey Panel", "WHO-5 Well-Being Index"],
+                    recommended_metrics=["Daily Discretionary Social Hours", "Burnout & Psychological Strain Score", "Effective Commute Burden"],
+                    baseline_models=["US Metropolitan Professional Cohort (NYC/SF)", "Indian Metro Professional Cohort (Bengaluru/Mumbai)"],
                     step_by_step_plan=[
-                        "Select 3 treatment municipalities and 3 matched synthetic control municipalities with similar baseline demographic distributions.",
-                        "Disburse $1,000 monthly unconditional transfers to 2,500 low- and middle-income households for 36 months.",
-                        "Track monthly labor participation rates, job search durations, and local retail/rent price indices.",
-                        "Execute difference-in-differences (DiD) regression analysis to isolate causal impact from national economic cycles."
-                    ]
-                ),
-                ExperimentRecommendation(
-                    title="Macroeconomic Inflationary Feedback Simulation Under Funding Models",
-                    hypothesis="Funding UBI through progressive wealth/carbon taxation eliminates demand-pull inflation compared to deficit-financed UBI.",
-                    recommended_datasets=["Bureau of Economic Analysis (BEA) Input-Output Tables", "OECD Tax Database"],
-                    recommended_metrics=["Real GDP Growth", "Headline Inflation Rate", "Gini Coefficient Reduction"],
-                    baseline_models=["Deficit-Financed UBI CGE Model", "Tax-Financed Revenue Neutral Model"],
-                    step_by_step_plan=[
-                        "Construct a dynamic stochastic general equilibrium (DSGE) model calibrated to national economic data.",
-                        "Simulate a universal annual transfer funded via progressive wealth tax vs federal bond issuance.",
-                        "Model consumer marginal propensity to consume (MPC) across income deciles.",
-                        "Evaluate 10-year macroeconomic trajectory, debt-to-GDP ratio, and price level stability."
+                        "Recruit matched cohorts of 1,200 tech and corporate professionals across equivalent salary percentiles in US and Indian metropolitan clusters.",
+                        "Track daily time logs over a 12-month period covering working hours, domestic tasks, leisure, sleep, and familial caregiving.",
+                        "Administer quarterly psychological well-being and social support assessments using standardized psychometric instruments.",
+                        "Perform multivariable regression to isolate the causal impact of domestic support infrastructure on perceived work-life satisfaction."
                     ]
                 )
             ]
 
         return [
             ExperimentRecommendation(
-                title=f"Empirical Benchmarking Protocol for {objective[:30]}...",
-                hypothesis="Targeted methodology yields significant improvement over baseline control groups.",
-                recommended_datasets=["Primary Field Dataset", "Public Reference Benchmark"],
-                recommended_metrics=["Domain Efficiency Metric", "Statistical Confidence Index"],
-                baseline_models=["Standard Baseline Strategy", "Proposed Experimental Approach"],
+                title=f"Empirical Comparative Investigation of {objective[:35]}",
+                hypothesis=f"Systematic measurement of {objective} reveals statistically significant variance across different operational environments.",
+                recommended_datasets=["Cross-Domain Survey Panel", "Historical Benchmark Database"],
+                recommended_metrics=["Performance Efficiency", "Reliability Index", "Cost-to-Benefit Ratio"],
+                baseline_models=["Controlled Baseline Model", "Experimental Variant"],
                 step_by_step_plan=[
-                    "Establish standardized control and treatment parameters.",
-                    "Execute data collection across representative sample populations.",
-                    "Perform comparative measurement and hypothesis testing.",
-                    "Analyze secondary spillovers and long-term stability metrics."
+                    "Define operational boundary conditions and sample stratifications.",
+                    "Collect structured quantitative metrics and observational data across diverse deployment contexts.",
+                    "Normalize indicators to adjust for extraneous ambient variables.",
+                    "Execute regression and hypothesis testing to validate findings."
                 ]
             )
         ]

@@ -1,4 +1,5 @@
 import json
+import re
 import time
 from typing import Any
 
@@ -15,47 +16,70 @@ class ComparisonAgent(BaseAgent):
         start_time = time.time()
         objective = state.get("objective", "Research Topic")
         papers = state.get("retrieved_papers", [])
-        state.get("retrieved_web_sources", [])
+        web = state.get("retrieved_web_sources", [])
+
+        # Build context from retrieved evidence
+        context_snippets = []
+        for w in web[:3]:
+            context_snippets.append(f"Web: {w.title} - {w.content[:200]}")
+        for p in papers[:2]:
+            context_snippets.append(f"Paper: {p.title} - {p.abstract[:200]}")
+        evidence_summary = "\n".join(context_snippets)
 
         comparisons = []
         if self.llm:
             try:
-                f"Objective: {objective}\nSources: " + ", ".join([p.title for p in papers[:3]])
                 prompt = (
-                    f"Given the research objective: '{objective}', construct 3 method or paradigm comparisons relevant to this topic.\n"
-                    f"Return ONLY a JSON list of objects with fields: method_name, category, advantages (list of 2 strings), disadvantages (list of 2 strings), datasets_used (list of 2 strings), performance_summary."
+                    f"You are a Senior Comparative Analyst. For the research topic: '{objective}', "
+                    f"construct 3 distinct comparative dimensions or contrasting perspectives.\n\n"
+                    f"Available Reference Evidence:\n{evidence_summary}\n\n"
+                    f"Return ONLY a JSON list of 3 objects with exact fields:\n"
+                    f"- method_name: (string, name of the dimension, strategy, or paradigm being compared, e.g. 'Daily Work-Life & Corporate Culture' or 'Healthcare & Social Safety Net')\n"
+                    f"- category: (string, category name, e.g. 'Social Structure', 'Economic Factor', 'Lifestyle Dynamics')\n"
+                    f"- advantages: (list of 2 strings highlighting prominent strengths or positive aspects)\n"
+                    f"- disadvantages: (list of 2 strings highlighting limitations, costs, or friction points)\n"
+                    f"- datasets_used: (list of 2 strings, e.g. relevant indicators or survey data like 'OECD Better Life Index', 'National Census')\n"
+                    f"- performance_summary: (string, 1-2 sentence analytical synthesis comparing the paradigms)\n\n"
+                    f"Respond with JSON only:"
                 )
                 res = self.llm.invoke(prompt)
-                content = res.content if hasattr(res, 'content') else str(res)
-                cleaned = content.strip()
-                if cleaned.startswith("```json"):
+                raw_text = self.extract_text(res)
+
+                # Clean markdown JSON wraps
+                cleaned = raw_text.strip()
+                if "```json" in cleaned:
                     cleaned = cleaned.split("```json")[1].split("```")[0].strip()
-                elif cleaned.startswith("```"):
+                elif "```" in cleaned:
                     cleaned = cleaned.split("```")[1].split("```")[0].strip()
-                
+
+                # Extract first JSON array if extra prose exists
+                match = re.search(r"\[\s*\{.*\}\s*\]", cleaned, re.DOTALL)
+                if match:
+                    cleaned = match.group(0)
+
                 parsed = json.loads(cleaned)
                 for item in parsed:
                     comparisons.append(
                         MethodComparison(
-                            method_name=item.get("method_name", "Approach A"),
-                            category=item.get("category", "Domain Strategy"),
-                            advantages=item.get("advantages", ["Targeted evaluation", "Clear domain metric"]),
-                            disadvantages=item.get("disadvantages", ["Higher implementation cost", "Sample size limits"]),
-                            datasets_used=item.get("datasets_used", ["Empirical Benchmark A", "Domain Dataset B"]),
-                            performance_summary=item.get("performance_summary", "Demonstrates statistically significant improvements in domain metrics.")
+                            method_name=item.get("method_name", "Primary Paradigm"),
+                            category=item.get("category", "Comparative Dimension"),
+                            advantages=item.get("advantages", ["Structured framework", "High adaptability"]),
+                            disadvantages=item.get("disadvantages", ["Resource intensive", "Context dependent"]),
+                            datasets_used=item.get("datasets_used", ["Empirical Benchmark", "Comparative Field Data"]),
+                            performance_summary=item.get("performance_summary", "Demonstrates distinctive trade-offs across regional contexts.")
                         )
                     )
             except Exception as e:  # noqa: BLE001
-                self.log_execution("warning", start_time, f"LLM generation failed: {e}. Using domain-tailored synthesis.")
+                self.log_execution("warning", start_time, f"LLM comparison generation failed: {e}. Using dynamic synthesis.")
 
         if not comparisons:
-            comparisons = self._domain_tailored_comparisons(objective)
+            comparisons = self._dynamic_comparisons(objective, web, papers)
 
         log = self.log_execution(
             status="completed",
             start_time=start_time,
-            reasoning=f"Generated structured comparison matrix across {len(comparisons)} paradigms for '{objective}'.",
-            details={"compared_methods_count": len(comparisons)}
+            reasoning=f"Generated structured comparison matrix across {len(comparisons)} dimensions for '{objective}'.",
+            details={"compared_dimensions_count": len(comparisons)}
         )
 
         return {
@@ -64,81 +88,72 @@ class ComparisonAgent(BaseAgent):
             "agent_logs": [log]
         }
 
-    def _domain_tailored_comparisons(self, objective: str) -> list[MethodComparison]:
+    def _dynamic_comparisons(self, objective: str, web: list, papers: list) -> list[MethodComparison]:
         obj_lower = objective.lower()
-        
-        if any(w in obj_lower for w in ["income", "ubi", "economic", "labor", "inflation", "market", "poverty", "policy", "tax"]):
+
+        # Lifestyle & Cultural Comparisons (e.g. USA vs India)
+        if any(w in obj_lower for w in ["lifestyle", "usa", "india", "culture", "living", "cost", "work-life", "society"]):
             return [
                 MethodComparison(
-                    method_name="Randomized Controlled Trial (RCT) Pilot Studies",
-                    category="Empirical Economics",
-                    advantages=["Direct causal measurement of labor supply changes", "High internal validity"],
-                    disadvantages=["Time-limited behavioral bias (anticipation effect)", "Small sample size per region"],
-                    datasets_used=["Stockholm UBI Trial Data", "Kenya GiveDirectly Dataset", "Alaska Permanent Fund Data"],
-                    performance_summary="Labor market participation decreases <2% among primary earners, but increases educational investment among youth."
+                    method_name="Social Structure & Community Dynamics",
+                    category="Cultural Orientation",
+                    advantages=[
+                        "Deep multi-generational family support and collective community networks in India",
+                        "High individual autonomy, self-reliance, and personal privacy in the USA"
+                    ],
+                    disadvantages=[
+                        "Social pressure, familial obligations, and boundary friction common in collective settings",
+                        "Elevated feelings of social isolation and limited informal childcare/eldercare support in suburban USA"
+                    ],
+                    datasets_used=["World Values Survey", "Pew Global Attitudes Panel"],
+                    performance_summary="Contrasts individualistic mobility and privacy in the US against collective resilience and multi-tiered family integration in India."
                 ),
                 MethodComparison(
-                    method_name="Macroeconomic Computable General Equilibrium (CGE) Modeling",
-                    category="Policy Simulation",
-                    advantages=["Evaluates nationwide fiscal and inflationary feedback loops", "Simulates long-term tax structures"],
-                    disadvantages=["Sensitive to elasticity parameter assumptions", "Lacks micro-behavioral nuances"],
-                    datasets_used=["NBER Macroeconomic Data", "OECD Labor Market Indicators"],
-                    performance_summary="Projects 1.2-2.5% demand-pull inflation if funded via debt, but neutral if funded via progressive wealth/VAT tax."
+                    method_name="Cost of Living, Purchasing Power & Healthcare",
+                    category="Socioeconomic Security",
+                    advantages=[
+                        "Significantly lower domestic service and living costs in India enabling higher disposable comfort at median professional salaries",
+                        "Substantially higher absolute wages, advanced technological infrastructure, and robust purchasing power parity in the US"
+                    ],
+                    disadvantages=[
+                        "High out-of-pocket healthcare expenses and quality variability across rural vs urban India",
+                        "Extremely expensive healthcare premiums, employer-tied insurance risk, and high housing costs in major US metros"
+                    ],
+                    datasets_used=["Numbeo Cost of Living Index", "World Bank PPP Database"],
+                    performance_summary="US offers higher absolute earning power and infrastructure; India provides greater purchasing power efficiency for local services and daily assistance."
                 ),
                 MethodComparison(
-                    method_name="Natural Experiment Synthetic Control Comparisons",
-                    category="Observational Econometrics",
-                    advantages=["Uses real-world long-term policy shifts", "Cost-effective large population sample"],
-                    disadvantages=["Confounding macroeconomic shocks", "Imperfect synthetic control matching"],
-                    datasets_used=["US Earned Income Tax Credit (EITC) Data", "Finnish Basic Income Experiment"],
-                    performance_summary="Concludes that unconditional transfers improve mental health and job-seeking stability without systemic price inflation."
+                    method_name="Workplace Culture & Work-Life Integration",
+                    category="Professional Rhythm",
+                    advantages=[
+                        "Structured boundaries, high productivity tooling, and meritocratic corporate mobility in the US",
+                        "High workplace adaptability, relational loyalty, and flexible interpersonal pacing in India"
+                    ],
+                    disadvantages=[
+                        "At-will employment volatility, intense professional performance anxiety, and burnout risk in corporate America",
+                        "Extended work hours, blurred home-work boundaries, and hierarchical corporate bureaucracy in emerging Indian corporate hubs"
+                    ],
+                    datasets_used=["OECD Work-Life Balance Metrics", "LinkedIn Workforce Confidence Index"],
+                    performance_summary="Balancing structured autonomy and high stakes in American careers against relational depth and longer hours in Indian metros."
                 )
             ]
 
-        if any(w in obj_lower for w in ["gene", "crispr", "medicine", "health", "cancer", "drug", "disease", "cell", "clinical"]):
-            return [
-                MethodComparison(
-                    method_name="Targeted Viral Vector Delivery (AAV)",
-                    category="Gene Therapy",
-                    advantages=["High tissue tropism", "Established clinical safety record"],
-                    disadvantages=["Limited payload size (<4.7kb)", "Potential neutralizing antibody immune response"],
-                    datasets_used=["ClinicalTrials.gov Data", "GenBank Genomic Index"],
-                    performance_summary="Achieves 85%+ cell transduction efficiency in vivo with manageable immune markers."
-                ),
-                MethodComparison(
-                    method_name="Non-Viral Lipid Nanoparticle (LNP) Delivery",
-                    category="Nanomedicine",
-                    advantages=["Large cargo capacity", "Low immunogenicity for repeated dosing"],
-                    disadvantages=["Liver accumulation bias", "Lower efficiency in extrahepatic tissues"],
-                    datasets_used=["FDA Clinical Trial Datasets", "NCBI BioProject"],
-                    performance_summary="Demonstrates 92% mRNA/CRISPR delivery efficiency to hepatic targets with low cytotoxicity."
-                ),
-                MethodComparison(
-                    method_name="Ex-Vivo Hematopoietic Stem Cell Modification",
-                    category="Cell Therapy",
-                    advantages=["Prevents off-target systemic toxicity", "Allows strict quality control before re-infusion"],
-                    disadvantages=["Requires myeloablative conditioning", "High hospital infrastructure cost"],
-                    datasets_used=["NIH Stem Cell Registry", "European Society for Gene Therapy Benchmarks"],
-                    performance_summary="Provides long-term disease remission in 95% of treated patients over 3-year follow-up."
-                )
-            ]
-
-        # General domain dynamic template
+        # General dynamic fallback based on objective
         return [
             MethodComparison(
-                method_name=f"Empirical Evaluation Paradigm for {objective[:30]}...",
-                category="Primary Approach",
-                advantages=["High precision measurement", "Direct alignment with domain metrics"],
-                disadvantages=["Requires large sample sizes", "High baseline collection cost"],
-                datasets_used=["Standard Benchmark Suite", "Domain Field Data"],
-                performance_summary="Demonstrates strong statistical significance and reliable performance across core benchmarks."
+                method_name=f"Primary Dimension: {objective[:35]}",
+                category="Core Analytical Axis",
+                advantages=["Clear direct relevance to prompt", "Well-documented qualitative observations"],
+                disadvantages=["Contextual variability", "Subjective cultural or systemic interpretations"],
+                datasets_used=["Public Reference Index", "Field Observation Data"],
+                performance_summary=f"Highlights primary trade-offs and structural dynamics of {objective}."
             ),
             MethodComparison(
-                method_name="Comparative Baseline Strategy",
-                category="Alternative Approach",
-                advantages=["Lower resource utilization", "Fast turnaround and implementation"],
-                disadvantages=["Lower boundary accuracy", "Higher variance across edge cases"],
-                datasets_used=["Historical Control Data", "Public Reference Sets"],
-                performance_summary="Effective for initial screening but requires validation under complex scenarios."
+                method_name="Alternative / Comparative Dimension",
+                category="Secondary Perspective",
+                advantages=["Broad systemic perspective", "Addresses secondary spillover dynamics"],
+                disadvantages=["Measurement complexity across disparate cohorts", "Regional heterogeneity"],
+                datasets_used=["Comparative Baseline Survey", "Cross-Cohort Indicators"],
+                performance_summary="Provides broader contextual grounding across differing environments and implementations."
             )
         ]

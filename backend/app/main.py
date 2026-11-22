@@ -1,8 +1,12 @@
 import os
+import time
+import uuid
+from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
+from loguru import logger
 
 from app.api.v1.endpoints import router as api_v1_router
 from app.core.config import settings
@@ -13,19 +17,48 @@ setup_logging()
 app = FastAPI(
     title=settings.PROJECT_NAME,
     version=settings.VERSION,
-    description="Autonomous Multi-Agent AI Research Platform Backend powered by LangGraph & FastAPI",
+    description="Autonomous Multi-Agent AI Research Platform Backend powered by LangGraph, ChromaDB & FastAPI",
     docs_url="/docs",
     redoc_url="/redoc",
 )
 
-# CORS Configuration for Next.js frontend
+# Secure CORS Configuration
+allowed_origins = settings.CORS_ORIGINS or ["http://localhost:3000", "http://127.0.0.1:3000"]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
+    allow_origins=allowed_origins if settings.ENVIRONMENT != "development" else ["*"],
+    allow_credentials=True if settings.ENVIRONMENT != "development" else False,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
+
+
+@app.middleware("http")
+async def request_context_middleware(request: Request, call_next):
+    """Injects a unique request ID and logs execution latency."""
+    request_id = request.headers.get("X-Request-ID") or uuid.uuid4().hex[:12]
+    start_time = time.time()
+
+    try:
+        response: Response = await call_next(request)
+        elapsed_ms = round((time.time() - start_time) * 1000, 2)
+        response.headers["X-Request-ID"] = request_id
+        response.headers["X-Response-Time-Ms"] = str(elapsed_ms)
+        logger.info(f"{request.method} {request.url.path} -> {response.status_code} ({elapsed_ms}ms) [{request_id}]")
+        return response
+    except Exception as exc:  # noqa: BLE001
+        elapsed_ms = round((time.time() - start_time) * 1000, 2)
+        logger.error(f"{request.method} {request.url.path} uncaught error ({elapsed_ms}ms): {exc}")
+        return JSONResponse(
+            status_code=500,
+            content={
+                "error": "InternalServerError",
+                "message": "An unexpected error occurred during request processing.",
+                "request_id": request_id
+            },
+            headers={"X-Request-ID": request_id}
+        )
+
 
 app.include_router(api_v1_router, prefix=settings.API_V1_STR)
 
@@ -35,26 +68,38 @@ async def root():
     return {
         "message": f"Welcome to {settings.PROJECT_NAME} API v{settings.VERSION}",
         "docs": "/docs",
-        "api_v1": settings.API_V1_STR
+        "api_v1": settings.API_V1_STR,
+        "environment": settings.ENVIRONMENT
     }
 
 
 @app.get("/api/v1/download-sample/{filename}")
 async def download_sample(filename: str):
+    """
+    Safely serves pre-packaged sample files without hardcoded platform paths.
+    """
     allowed_files = [
         "Universal_Basic_Income_Research_2025.txt",
         "Universal_Basic_Income_Research_2025.pdf",
         "Universal_Basic_Income_Research_2025.md",
         "Quantum_Grid_Optimization_Whitepaper_2025.pdf"
     ]
-    if filename not in allowed_files:
-        raise HTTPException(status_code=404, detail="File not found")
-    
-    file_path = os.path.join(r"D:\Projects-Personal\researchmind-ai", filename)
-    if not os.path.exists(file_path):
-        raise HTTPException(status_code=404, detail="File does not exist")
-    
-    return FileResponse(path=file_path, filename=filename, media_type="application/octet-stream")
+    clean_name = os.path.basename(filename)
+    if clean_name not in allowed_files:
+        raise HTTPException(status_code=404, detail="Requested sample file not found.")
+
+    # Search in project root or data directory
+    candidate_paths = [
+        Path(settings.PROJECT_ROOT) / clean_name,
+        Path(settings.DATA_DIR) / clean_name,
+        Path(settings.BACKEND_ROOT) / clean_name,
+    ]
+
+    for p in candidate_paths:
+        if p.exists() and p.is_file():
+            return FileResponse(path=str(p), filename=clean_name, media_type="application/octet-stream")
+
+    raise HTTPException(status_code=404, detail="Sample file does not exist on disk.")
 
 
 if __name__ == "__main__":

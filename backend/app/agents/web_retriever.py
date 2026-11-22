@@ -15,10 +15,16 @@ class WebResearchAgent(BaseAgent):
         start_time = time.time()
         objective = state.get("objective", "")
 
-        web_results = self.tavily.search_web(query=objective, max_results=5)
+        try:
+            web_results = self.tavily.search_web(query=objective, max_results=5)
+            status = "completed"
+        except Exception as e:  # noqa: BLE001
+            web_results = []
+            status = "partial_failure"
+            self.log_execution("warning", start_time, f"Tavily web search failed: {e}")
 
         log = self.log_execution(
-            status="completed",
+            status=status,
             start_time=start_time,
             reasoning=f"Retrieved {len(web_results)} web search results and technical articles via Tavily.",
             details={"web_results_count": len(web_results)}

@@ -15,10 +15,16 @@ class GitHubResearchAgent(BaseAgent):
         start_time = time.time()
         objective = state.get("objective", "")
 
-        repos = self.github.search_repositories(query=objective, max_results=5)
+        try:
+            repos = self.github.search_repositories(query=objective, max_results=5)
+            status = "completed"
+        except Exception as e:  # noqa: BLE001
+            repos = []
+            status = "partial_failure"
+            self.log_execution("warning", start_time, f"GitHub search failed: {e}")
 
         log = self.log_execution(
-            status="completed",
+            status=status,
             start_time=start_time,
             reasoning=f"Retrieved {len(repos)} GitHub repositories and codebases.",
             details={"repo_count": len(repos)}

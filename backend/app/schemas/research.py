@@ -1,3 +1,4 @@
+from typing import Any
 from pydantic import BaseModel, Field
 
 
@@ -6,7 +7,8 @@ class ResearchSubTask(BaseModel):
     title: str
     description: str
     assigned_agent: str
-    status: str = "pending"  # pending, in_progress, completed, failed
+    status: str = "pending"
+    result: dict[str, Any] | None = None
 
 
 class MethodComparison(BaseModel):
@@ -14,16 +16,15 @@ class MethodComparison(BaseModel):
     category: str
     advantages: list[str] = Field(default_factory=list)
     disadvantages: list[str] = Field(default_factory=list)
-    datasets_used: list[str] = Field(default_factory=list)
-    performance_summary: str
+    performance_summary: str = ""
 
 
 class ResearchGap(BaseModel):
     title: str
     area: str
     description: str
-    severity: str  # High, Medium, Low
     potential_impact: str
+    severity: str = "Medium"
 
 
 class ExperimentRecommendation(BaseModel):
@@ -45,4 +46,4 @@ class ResearchReport(BaseModel):
     future_work: list[str] = Field(default_factory=list)
     suggested_experiments: list[ExperimentRecommendation] = Field(default_factory=list)
     references: list[str] = Field(default_factory=list)
-    full_markdown: str
+    full_markdown: str = ""
