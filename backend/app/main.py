@@ -22,13 +22,12 @@ app = FastAPI(
     redoc_url="/redoc",
 )
 
-# Secure CORS Configuration
-allowed_origins = settings.CORS_ORIGINS or ["http://localhost:3000", "http://127.0.0.1:3000"]
+# Production-Grade Permissive CORS (Allows Localhost, Vercel deployments, & custom domains)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=allowed_origins if settings.ENVIRONMENT != "development" else ["*"],
-    allow_credentials=True if settings.ENVIRONMENT != "development" else False,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["*"],
     allow_headers=["*"],
 )
 
