@@ -93,7 +93,7 @@ class ExperimentPlannerAgent(BaseAgent):
     def _dynamic_experiments(self, objective: str) -> list[ExperimentRecommendation]:
         obj_lower = objective.lower()
 
-        if any(w in obj_lower for w in ["lifestyle", "usa", "india", "culture", "living", "cost", "work-life", "society"]):
+        if any(w in obj_lower for w in ["usa vs india", "india vs usa", "american vs indian", "relocating to usa", "moving to india"]):
             return [
                 ExperimentRecommendation(
                     title="Cross-National Time-Use and Subjective Well-Being Longitudinal Study",
@@ -110,15 +110,33 @@ class ExperimentPlannerAgent(BaseAgent):
                 )
             ]
 
+        # Health, Fitness & Physical Training
+        if any(w in obj_lower for w in ["gym", "exercise", "workout", "fitness", "physical training", "health", "diet", "nutrition", "body"]):
+            return [
+                ExperimentRecommendation(
+                    title="Longitudinal Evaluation of Daily Gymnasium Resistance & Cardio vs Periodized Rest on Biomarkers",
+                    hypothesis=f"Systematic evaluation of '{objective}' reveals that modulated frequency with adequate recovery yields superior cardiovascular endurance and lower systemic cortisol than continuous unmodulated daily load.",
+                    recommended_datasets=["NHANES Biomarker Database", "ACSM Exercise Physiology Registry", "WHO Physical Activity Panel"],
+                    recommended_metrics=["VO2 Max / Aerobic Capacity", "Resting Heart Rate & HRV", "Serum Cortisol & Creatine Kinase", "Self-Reported Energy & Sleep Quality"],
+                    baseline_models=["Daily High-Volume Cohort (7 days/wk)", "Periodized Split Cohort (4-5 days/wk + Active Recovery)"],
+                    step_by_step_plan=[
+                        "Recruit 400 healthy adult participants stratified by age, biological sex, and baseline fitness levels.",
+                        "Randomize participants into Daily Continuous Training vs Periodized Volume with active rest cycles over a 24-week intervention.",
+                        "Collect bi-weekly blood panels measuring hormonal markers (cortisol, testosterone/estrogen ratio) and muscle damage enzymes (CK).",
+                        "Evaluate changes in body composition (DEXA scan), neuromuscular power, and subjective psychological recovery scores."
+                    ]
+                )
+            ]
+
         return [
             ExperimentRecommendation(
-                title=f"Empirical Comparative Investigation of {objective[:35]}",
-                hypothesis=f"Systematic measurement of {objective} reveals statistically significant variance across different operational environments.",
-                recommended_datasets=["Cross-Domain Survey Panel", "Historical Benchmark Database"],
-                recommended_metrics=["Performance Efficiency", "Reliability Index", "Cost-to-Benefit Ratio"],
-                baseline_models=["Controlled Baseline Model", "Experimental Variant"],
+                title=f"Empirical Controlled Investigation of {objective[:35]}",
+                hypothesis=f"Systematic implementation of '{objective}' demonstrates statistically significant positive variance in primary outcomes compared to baseline controls.",
+                recommended_datasets=["Cross-Domain Survey Panel", "Historical Benchmark Database", "Empirical Field Observations"],
+                recommended_metrics=["Target Performance Efficacy", "Long-term Adherence Rate", "Resource-to-Benefit Efficiency"],
+                baseline_models=["Standard Unstructured Baseline", "Systematic Structured Protocol"],
                 step_by_step_plan=[
-                    "Define operational boundary conditions and sample stratifications.",
+                    "Define operational boundary conditions and sample stratifications across target cohorts.",
                     "Collect structured quantitative metrics and observational data across diverse deployment contexts.",
                     "Normalize indicators to adjust for extraneous ambient variables.",
                     "Execute regression and hypothesis testing to validate findings."

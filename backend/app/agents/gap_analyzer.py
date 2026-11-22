@@ -86,7 +86,7 @@ class ResearchGapAnalyzerAgent(BaseAgent):
     def _dynamic_gaps(self, objective: str) -> list[ResearchGap]:
         obj_lower = objective.lower()
 
-        if any(w in obj_lower for w in ["lifestyle", "usa", "india", "culture", "living", "cost", "work-life", "society"]):
+        if any(w in obj_lower for w in ["usa vs india", "india vs usa", "american vs indian", "relocating to usa", "moving to india"]):
             return [
                 ResearchGap(
                     title="Healthcare Security Disparities and Medical Bankruptcy Risk",
@@ -104,18 +104,37 @@ class ResearchGapAnalyzerAgent(BaseAgent):
                 )
             ]
 
+        # Health, Fitness & Physical Training
+        if any(w in obj_lower for w in ["gym", "exercise", "workout", "fitness", "physical training", "health", "diet", "nutrition", "body"]):
+            return [
+                ResearchGap(
+                    title="Optimal Training Frequency vs Overtraining Syndrome and Central Nervous System Recovery",
+                    area="Exercise Physiology & Recovery",
+                    description="While daily training builds habit consistency, existing literature lacks large-scale biomarker tracking to distinguish between positive neuromuscular adaptation and cumulative overtraining or hormonal suppression.",
+                    severity="High",
+                    potential_impact="Enables practitioners and coaches to calibrate daily volume to prevent chronic fatigue and musculoskeletal degradation."
+                ),
+                ResearchGap(
+                    title="Long-Term Adherence Mechanisms Across Heterogeneous Age and Lifestyle Cohorts",
+                    area="Behavioral Medicine & Lifestyle Adherence",
+                    description="Most gym intervention studies focus on 8-12 week randomized trials; longitudinal data tracking multi-year behavioral maintenance and adherence drop-off factors remains sparse.",
+                    severity="Medium",
+                    potential_impact="Informs sustainable public health exercise guidelines and personalized fitness prescription."
+                )
+            ]
+
         return [
             ResearchGap(
-                title=f"Longitudinal Quality of Life and Adaptation Trajectories in {objective[:30]}",
+                title=f"Longitudinal Real-World Outcomes and Sustained Adherence Trajectories in {objective[:30]}",
                 area="Empirical Research",
-                description="Existing literature often relies on cross-sectional surveys rather than longitudinal studies tracking long-term psychological and economic outcomes.",
+                description="Existing literature often relies on short-term observational studies rather than longitudinal protocols tracking multi-year efficacy and behavioral sustainability.",
                 severity="High",
                 potential_impact="Provides robust empirical verification required for policy, clinical, or personal decision-making."
             ),
             ResearchGap(
-                title="Socioeconomic Variance Across Heterogeneous Sub-Populations",
+                title="Efficacy Variance Across Heterogeneous Baseline Cohorts",
                 area="Comparative Systems",
-                description="Aggregate metrics frequently obscure sharp internal divides across urban, suburban, and regional demographic cohorts.",
+                description="Aggregate metrics frequently obscure sharp internal divides across differing individual baselines, experience levels, and resource contexts.",
                 severity="Medium",
                 potential_impact="Prevents over-generalization and enhances analytical granularity."
             )

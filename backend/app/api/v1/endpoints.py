@@ -374,5 +374,8 @@ async def health_check():
         "service": settings.PROJECT_NAME,
         "version": settings.VERSION,
         "database": "connected" if db_ok else "unavailable",
-        "vector_store": vstore_health
+        "vector_store": vstore_health,
+        "llm_provider": settings.DEFAULT_MODEL_PROVIDER,
+        "llm_configured": bool(settings.GEMINI_API_KEY or settings.OPENAI_API_KEY or settings.GROQ_API_KEY),
+        "tavily_configured": bool(settings.TAVILY_API_KEY)
     }

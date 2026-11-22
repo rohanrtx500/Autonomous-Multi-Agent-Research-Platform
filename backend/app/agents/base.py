@@ -151,8 +151,8 @@ class BaseAgent:
                     model=model_name,
                     google_api_key=settings.GEMINI_API_KEY,
                     temperature=0.3,
-                    max_retries=1,
-                    request_timeout=20,
+                    max_retries=2,
+                    request_timeout=45,
                 )
         except Exception as e:  # noqa: BLE001
             logger.warning(f"Could not initialize LLM provider '{settings.DEFAULT_MODEL_PROVIDER}': {e}. Falling back to rule-based generation.")
