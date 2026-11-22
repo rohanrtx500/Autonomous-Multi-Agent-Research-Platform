@@ -88,7 +88,6 @@ class EvaluationAgent(BaseAgent):
         total_claims = citation_verif.get("total_claims", 0)
         supported_claims = citation_verif.get("supported_claims", 0)
         partially_supported = citation_verif.get("partially_supported_claims", 0)
-        unsupported_claims = citation_verif.get("unsupported_claims", 0)
 
         citation_coverage = citation_verif.get("citation_coverage")
         citation_correctness = citation_verif.get("citation_correctness")

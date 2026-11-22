@@ -1,5 +1,5 @@
 import json
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from loguru import logger
@@ -52,7 +52,7 @@ class JobRepository:
                     job.current_step = current_step
                     if error_message:
                         job.error_message = error_message
-                    job.updated_at = datetime.now(timezone.utc)
+                    job.updated_at = datetime.now(UTC)
                     session.commit()
         except Exception as e:  # noqa: BLE001
             logger.error(f"Failed to update progress for job {job_id}: {e}")
@@ -94,7 +94,7 @@ class JobRepository:
                 job.status = final_state.get("status", "completed")
                 job.progress_percent = 100
                 job.current_step = "completed"
-                job.completed_at = datetime.now(timezone.utc)
+                job.completed_at = datetime.now(UTC)
                 job.execution_time_seconds = execution_time_seconds
                 job.iteration_count = final_state.get("iteration_count", 0)
                 job.final_report_markdown = final_state.get("final_report_markdown")
@@ -121,8 +121,8 @@ class JobRepository:
                 if job:
                     job.status = "failed"
                     job.error_message = error_message
-                    job.completed_at = datetime.now(timezone.utc)
-                    job.updated_at = datetime.now(timezone.utc)
+                    job.completed_at = datetime.now(UTC)
+                    job.updated_at = datetime.now(UTC)
                     session.commit()
         except Exception as e:  # noqa: BLE001
             logger.error(f"Failed to record failure for job {job_id}: {e}")
@@ -138,7 +138,7 @@ class JobRepository:
                 if job and job.status in ["pending", "running"]:
                     job.status = "cancelled"
                     job.error_message = "Execution cancelled by user."
-                    job.completed_at = datetime.now(timezone.utc)
+                    job.completed_at = datetime.now(UTC)
                     session.commit()
                     return True
         except Exception as e:  # noqa: BLE001
@@ -168,7 +168,7 @@ class JobRepository:
         if not self.session_factory:
             return 0
 
-        cutoff = datetime.now(timezone.utc) - timedelta(days=retention_days)
+        cutoff = datetime.now(UTC) - timedelta(days=retention_days)
         with self.session_factory() as session:
             deleted = session.query(ResearchJobModel).filter(ResearchJobModel.created_at < cutoff).delete()
             session.commit()

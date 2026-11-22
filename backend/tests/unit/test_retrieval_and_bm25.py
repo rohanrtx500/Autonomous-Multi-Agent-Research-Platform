@@ -62,6 +62,7 @@ def test_vector_store_hybrid_search_and_health():
 
 import uuid
 
+
 def test_vector_store_deduplication():
     vstore = VectorStoreService(collection_name="test_dedup_collection")
     unique_id = f"unique_doc_{uuid.uuid4().hex[:6]}"

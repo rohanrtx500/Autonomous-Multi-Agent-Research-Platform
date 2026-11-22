@@ -1,6 +1,6 @@
 from app.agents.citation_verifier import CitationVerificationAgent
 from app.schemas.research import ResearchReport
-from app.schemas.source import PaperItem, SourceDocument
+from app.schemas.source import PaperItem
 from app.schemas.state import ResearchState
 
 

@@ -3,7 +3,7 @@ import time
 from typing import Any
 
 from app.agents.base import BaseAgent, build_unified_source_registry
-from app.schemas.evaluation import ClaimStatus, ClaimVerificationItem, CitationVerificationResult
+from app.schemas.evaluation import CitationVerificationResult, ClaimStatus, ClaimVerificationItem
 from app.schemas.state import ResearchState
 
 STOPWORDS = {

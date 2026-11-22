@@ -1,5 +1,5 @@
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from loguru import logger
@@ -27,8 +27,8 @@ class ResearchJobModel(Base):
     status = Column(String(32), nullable=False, default="pending", index=True)
     progress_percent = Column(Integer, default=0)
     current_step = Column(String(64), default="initialized")
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
-    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
     completed_at = Column(DateTime, nullable=True)
     execution_time_seconds = Column(Float, default=0.0)
     max_iterations = Column(Integer, default=2)

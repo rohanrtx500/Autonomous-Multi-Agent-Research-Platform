@@ -72,7 +72,7 @@ def _execute_graph_sync(job_id: str, objective: str, max_iterations: int) -> dic
         elapsed = round(time.time() - start_time, 2)
         job_repository.complete_job(job_id, final_state, execution_time_seconds=elapsed)
         return final_state
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         logger.error(f"Research execution failure for job {job_id}: {e}")
         job_repository.fail_job(job_id, error_message=str(e))
         raise
@@ -109,10 +109,10 @@ async def start_research(request: ResearchRequest):
             asyncio.to_thread(_execute_graph_sync, job_id, clean_obj, request.max_iterations),
             timeout=float(settings.JOB_TIMEOUT_SECONDS)
         )
-    except asyncio.TimeoutError:
+    except TimeoutError:
         job_repository.fail_job(job_id, "Execution exceeded maximum configured timeout.")
         raise HTTPException(status_code=504, detail=f"Research job timed out after {settings.JOB_TIMEOUT_SECONDS}s.")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.error(f"Endpoint execution error for job {job_id}: {e}")
         raise HTTPException(status_code=500, detail=f"Research graph execution failed: {e!s}")
 

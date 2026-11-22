@@ -224,7 +224,7 @@ class VectorStoreService:
                 for i in range(0, len(matched_ids), batch_size):
                     self.collection.delete(ids=matched_ids[i:i + batch_size])
                 logger.info(f"Deleted {len(matched_ids)} chunks for '{filename}' from ChromaDB.")
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.error(f"Failed to delete chunks for '{filename}' from ChromaDB: {e}")
 
         matched_set = set(matched_ids)

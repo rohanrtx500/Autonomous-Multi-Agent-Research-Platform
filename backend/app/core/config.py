@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Base directories computed relative to this file

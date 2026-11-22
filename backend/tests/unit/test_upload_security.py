@@ -1,6 +1,6 @@
 import io
 import os
-import pytest
+
 from fastapi.testclient import TestClient
 
 from app.core.config import settings
@@ -33,7 +33,6 @@ def test_upload_path_traversal_attempt():
     # The endpoint sanitizes the basename or rejects traversal
     # If accepted, file is placed safely within upload dir without escaping
     if response.status_code == 200:
-        data = response.json()
         assert not os.path.exists("etc/passwd.txt")
         assert not os.path.exists("../../etc/passwd.txt")
     else:

@@ -1,12 +1,16 @@
-import os
-import sys
-from reportlab.lib.pagesizes import letter
 from reportlab.lib import colors
-from reportlab.platypus import (
-    SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak, KeepTogether, HRFlowable
-)
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.pagesizes import letter
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.pdfgen import canvas
+from reportlab.platypus import (
+    HRFlowable,
+    PageBreak,
+    Paragraph,
+    SimpleDocTemplate,
+    Spacer,
+    Table,
+    TableStyle,
+)
 
 PDF_OUTPUT_PATH = r"D:\Projects-Personal\researchmind-ai\Autonomous_Research_Platform_Interview_Guide.pdf"
 
@@ -66,10 +70,8 @@ def build_pdf():
     PRIMARY = colors.HexColor("#0F172A")
     ACCENT = colors.HexColor("#2563EB")
     TEXT_DARK = colors.HexColor("#1E293B")
-    TEXT_MUTED = colors.HexColor("#475569")
     BG_BOX = colors.HexColor("#F8FAFC")
     BORDER_BOX = colors.HexColor("#CBD5E1")
-    SUCCESS = colors.HexColor("#059669")
 
     # Typography Styles
     title_style = ParagraphStyle(
@@ -126,12 +128,6 @@ def build_pdf():
         spaceAfter=6
     )
 
-    body_bold = ParagraphStyle(
-        'BodyBold',
-        parent=body_style,
-        fontName='Helvetica-Bold'
-    )
-
     q_style = ParagraphStyle(
         'Question',
         parent=styles['Normal'],
@@ -152,15 +148,6 @@ def build_pdf():
         leading=12.5,
         textColor=TEXT_DARK,
         spaceAfter=6
-    )
-
-    badge_style = ParagraphStyle(
-        'Badge',
-        parent=styles['Normal'],
-        fontName='Helvetica-Bold',
-        fontSize=8,
-        leading=10,
-        textColor=colors.white
     )
 
     story = []

@@ -5,7 +5,6 @@ from app.agents.base import BaseAgent
 from app.schemas.state import ResearchState
 from app.services.github_service import GitHubSearchService
 
-
 TECHNICAL_KEYWORDS = {
     "code", "github", "repo", "repository", "software", "algorithm", "model",
     "framework", "library", "api", "python", "javascript", "deep learning",
