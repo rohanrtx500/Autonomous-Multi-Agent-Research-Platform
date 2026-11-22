@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { UploadCloud, File, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
 import { uploadDocument } from '@/lib/api';
 
@@ -13,6 +13,7 @@ export default function KnowledgeUpload({ onUploadSuccess }: KnowledgeUploadProp
   const [uploading, setUploading] = useState(false);
   const [result, setResult] = useState<{ filename: string; chunks_ingested: number; message: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -33,6 +34,9 @@ export default function KnowledgeUpload({ onUploadSuccess }: KnowledgeUploadProp
         onUploadSuccess(res.filename, res.chunks_ingested);
       }
       setFile(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     } catch (err: any) {
       setError(err.message || 'Upload failed');
     } finally {
@@ -60,6 +64,7 @@ export default function KnowledgeUpload({ onUploadSuccess }: KnowledgeUploadProp
           )}
         </div>
         <input
+          ref={fileInputRef}
           type="file"
           id="fileInput"
           className="hidden"

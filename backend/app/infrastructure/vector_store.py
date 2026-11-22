@@ -186,6 +186,52 @@ class VectorStoreService:
 
         return results
 
+    def list_documents(self) -> list[dict[str, Any]]:
+        """Returns summarized metadata for all unique user documents indexed in the vector store."""
+        docs_summary: dict[str, dict[str, Any]] = {}
+        for doc in self.in_memory_docs:
+            if doc.source_type != "user_doc":
+                continue
+            name = doc.metadata.get("file_name")
+            if not name:
+                name = doc.title.split(" (Part ")[0] if " (Part " in doc.title else doc.title
+            if name not in docs_summary:
+                ext = os.path.splitext(name)[1].lstrip(".").upper() or "DOC"
+                docs_summary[name] = {
+                    "name": name,
+                    "type": ext,
+                    "sections": 0,
+                    "source_type": doc.source_type,
+                    "date": "Indexed in Vector DB"
+                }
+            docs_summary[name]["sections"] += 1
+        return list(docs_summary.values())
+
+    def delete_document(self, filename: str) -> int:
+        """Deletes all chunks associated with a specific filename from ChromaDB and in-memory indexes."""
+        matched_ids = [
+            doc.id for doc in self.in_memory_docs
+            if doc.metadata.get("file_name") == filename
+            or doc.title.startswith(filename)
+            or doc.id.startswith(f"{filename}_chunk_")
+        ]
+        if not matched_ids:
+            return 0
+
+        if self.collection:
+            try:
+                batch_size = 100
+                for i in range(0, len(matched_ids), batch_size):
+                    self.collection.delete(ids=matched_ids[i:i + batch_size])
+                logger.info(f"Deleted {len(matched_ids)} chunks for '{filename}' from ChromaDB.")
+            except Exception as e:
+                logger.error(f"Failed to delete chunks for '{filename}' from ChromaDB: {e}")
+
+        matched_set = set(matched_ids)
+        self.in_memory_docs = [doc for doc in self.in_memory_docs if doc.id not in matched_set]
+        self.bm25_searcher.index_documents(self.in_memory_docs)
+        return len(matched_ids)
+
     def health_check(self) -> dict[str, Any]:
         """Returns health telemetry for vector database and lexical index."""
         chroma_ok = False

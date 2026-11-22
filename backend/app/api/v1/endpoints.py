@@ -229,6 +229,7 @@ async def upload_document(file: UploadFile = File(...)):
 
         # 5. Extract and index chunks into hybrid vector store
         docs = doc_loader.load_file(resolved_path, filename=original_name)
+        vector_store.delete_document(original_name)
         vector_store.add_documents(docs)
 
         return {
@@ -251,6 +252,26 @@ async def upload_document(file: UploadFile = File(...)):
                 os.remove(resolved_path)
             except Exception as e:  # noqa: BLE001
                 logger.warning(f"Could not remove temporary file {resolved_path}: {e}")
+
+
+@router.get("/documents")
+async def list_ingested_documents():
+    """Returns the list of documents currently ingested into the knowledge base."""
+    return vector_store.list_documents()
+
+
+@router.delete("/documents/{filename}")
+async def delete_ingested_document(filename: str):
+    """Deletes an ingested document and all its chunks from the knowledge base."""
+    safe_name = os.path.basename(filename.replace("\\", "/"))
+    deleted_count = vector_store.delete_document(safe_name)
+    if deleted_count == 0:
+        raise HTTPException(status_code=404, detail=f"Document '{safe_name}' not found in knowledge base.")
+    return {
+        "filename": safe_name,
+        "deleted_chunks": deleted_count,
+        "message": f"Successfully removed '{safe_name}' ({deleted_count} chunks deleted)."
+    }
 
 
 @router.get("/status")

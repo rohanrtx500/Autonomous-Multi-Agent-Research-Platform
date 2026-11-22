@@ -125,3 +125,34 @@ export async function fetchHealth(): Promise<boolean> {
     return false;
   }
 }
+
+export interface IngestedDocumentInfo {
+  name: string;
+  type: string;
+  sections: number;
+  source_type: string;
+  date: string;
+}
+
+export async function getDocuments(): Promise<IngestedDocumentInfo[]> {
+  try {
+    const apiBase = getApiBase();
+    const res = await fetch(`${apiBase}/documents`);
+    if (!res.ok) return [];
+    return res.json();
+  } catch {
+    return [];
+  }
+}
+
+export async function deleteDocument(filename: string): Promise<boolean> {
+  try {
+    const apiBase = getApiBase();
+    const res = await fetch(`${apiBase}/documents/${encodeURIComponent(filename)}`, {
+      method: 'DELETE',
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
