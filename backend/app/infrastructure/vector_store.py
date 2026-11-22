@@ -86,6 +86,7 @@ class VectorStoreService:
                 metadatas = [
                     {
                         "title": doc.title,
+                        "file_name": doc.metadata.get("file_name", doc.title),
                         "source_type": doc.source_type,
                         "url": doc.url or "",
                         "author": doc.author or "",

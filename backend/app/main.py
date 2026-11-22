@@ -52,10 +52,15 @@ async def request_context_middleware(request: Request, call_next):
             status_code=500,
             content={
                 "error": "InternalServerError",
-                "message": "An unexpected error occurred during request processing.",
+                "message": f"An unexpected error occurred during request processing: {exc!s}",
                 "request_id": request_id
             },
-            headers={"X-Request-ID": request_id}
+            headers={
+                "X-Request-ID": request_id,
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Methods": "*",
+                "Access-Control-Allow-Headers": "*",
+            }
         )
 
 

@@ -227,10 +227,14 @@ async def upload_document(file: UploadFile = File(...)):
         elif ext in [".docx", ".pptx"] and not header_bytes.startswith(b"PK\x03\x04"):
             raise HTTPException(status_code=400, detail=f"Corrupted file: Expected valid Office Zip container for {ext}.")
 
-        # 5. Extract and index chunks into hybrid vector store
-        docs = doc_loader.load_file(resolved_path, filename=original_name)
-        vector_store.delete_document(original_name)
-        vector_store.add_documents(docs)
+        # 5. Extract and index chunks into hybrid vector store off the main event loop
+        def _process_and_index():
+            loaded_docs = doc_loader.load_file(resolved_path, filename=original_name)
+            vector_store.delete_document(original_name)
+            vector_store.add_documents(loaded_docs)
+            return loaded_docs
+
+        docs = await asyncio.to_thread(_process_and_index)
 
         return {
             "filename": original_name,

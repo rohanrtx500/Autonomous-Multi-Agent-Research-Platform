@@ -6,7 +6,7 @@ function getApiBase(): string {
   let envBase = process.env.NEXT_PUBLIC_API_BASE;
 
   // If not explicitly set via environment variable, automatically detect environment:
-  if (!envBase) {
+  if (!envBase || envBase.trim() === '') {
     if (typeof window !== 'undefined') {
       const host = window.location.hostname;
       if (host !== 'localhost' && host !== '127.0.0.1') {
@@ -22,6 +22,17 @@ function getApiBase(): string {
   }
 
   envBase = envBase.trim().replace(/\/+$/, '');
+
+  // If protocol was omitted in custom env vars, prepend https://
+  if (!envBase.startsWith('http://') && !envBase.startsWith('https://')) {
+    envBase = `https://${envBase}`;
+  }
+
+  // Prevent mixed-content browser blocking: if loaded over HTTPS, guarantee API base uses HTTPS
+  if (typeof window !== 'undefined' && window.location.protocol === 'https:' && envBase.startsWith('http://')) {
+    envBase = envBase.replace(/^http:\/\//, 'https://');
+  }
+
   if (!envBase.endsWith('/api/v1')) {
     envBase = `${envBase}/api/v1`;
   }
@@ -101,25 +112,32 @@ export async function uploadDocument(file: File): Promise<{ filename: string; ch
   const formData = new FormData();
   formData.append('file', file);
 
-  const response = await fetch(`${apiBase}/upload`, {
-    method: 'POST',
-    body: formData,
-  });
+  try {
+    const response = await fetch(`${apiBase}/upload`, {
+      method: 'POST',
+      body: formData,
+    });
 
-  if (!response.ok) {
-    let errorDetail = `Upload error: HTTP ${response.status}`;
-    try {
-      const errBody = await response.json();
-      if (errBody?.detail) {
-        errorDetail = typeof errBody.detail === 'string' ? errBody.detail : JSON.stringify(errBody.detail);
+    if (!response.ok) {
+      let errorDetail = `Upload error: HTTP ${response.status}`;
+      try {
+        const errBody = await response.json();
+        if (errBody?.detail) {
+          errorDetail = typeof errBody.detail === 'string' ? errBody.detail : JSON.stringify(errBody.detail);
+        }
+      } catch {
+        // ignore
       }
-    } catch {
-      // ignore
+      throw new Error(errorDetail);
     }
-    throw new Error(errorDetail);
-  }
 
-  return response.json();
+    return await response.json();
+  } catch (err: any) {
+    if (err.name === 'TypeError' || err.message === 'Failed to fetch' || err.message?.includes('Failed to fetch')) {
+      throw new Error(`Could not connect to ${apiBase}/upload. Please verify your backend server is awake and reachable.`);
+    }
+    throw err;
+  }
 }
 
 export async function fetchMetrics(): Promise<any> {

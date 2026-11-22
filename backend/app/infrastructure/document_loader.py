@@ -35,7 +35,7 @@ class DocumentLoaderService:
         logger.info(f"Extracting document text: {name} (type: {ext})")
         text_content = ""
 
-        if ext in [".txt", ".md", ".csv"]:
+        if ext in [".txt", ".md", ".csv", ".html"]:
             try:
                 with open(file_path, "r", encoding="utf-8") as f:
                     text_content = f.read()
@@ -98,7 +98,7 @@ class DocumentLoaderService:
                 raise ValueError(f"Corrupted or unreadable PPTX: {e}") from e
 
         else:
-            raise ValueError(f"Unsupported document format '{ext}'. Allowed: .pdf, .docx, .pptx, .txt, .md")
+            raise ValueError(f"Unsupported document format '{ext}'. Allowed: .pdf, .docx, .pptx, .txt, .md, .csv, .html")
 
         if not text_content or len(text_content.strip()) < 10:
             raise ValueError(f"Extracted document text from {name} is insufficient or empty.")

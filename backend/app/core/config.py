@@ -34,7 +34,7 @@ class Settings(BaseSettings):
     UPLOAD_DIR: str = _DEFAULT_UPLOAD_DIR
     CHROMA_PERSIST_DIR: str = _DEFAULT_CHROMA_DIR
     MAX_UPLOAD_SIZE_BYTES: int = 15 * 1024 * 1024  # 15 MB limit
-    ALLOWED_EXTENSIONS: list[str] = [".pdf", ".docx", ".pptx", ".txt", ".md"]
+    ALLOWED_EXTENSIONS: list[str] = [".pdf", ".docx", ".pptx", ".txt", ".md", ".csv", ".html"]
 
     # Database Persistence (PostgreSQL with SQLite local fallback)
     DATABASE_URL: str = f"sqlite:///{_DEFAULT_DB_PATH}"
