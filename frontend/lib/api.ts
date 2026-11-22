@@ -1,7 +1,26 @@
 import { PersistentJob, ResearchResponse } from './types';
 
+const PRODUCTION_API_URL = 'https://autonomous-multi-agent-research-platform.onrender.com/api/v1';
+
 function getApiBase(): string {
-  let envBase = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:8000/api/v1';
+  let envBase = process.env.NEXT_PUBLIC_API_BASE;
+
+  // If not explicitly set via environment variable, automatically detect environment:
+  if (!envBase) {
+    if (typeof window !== 'undefined') {
+      const host = window.location.hostname;
+      if (host !== 'localhost' && host !== '127.0.0.1') {
+        // Running on live cloud (e.g. Vercel) -> connect directly to live Render backend
+        envBase = PRODUCTION_API_URL;
+      } else {
+        // Running locally
+        envBase = 'http://localhost:8000/api/v1';
+      }
+    } else {
+      envBase = process.env.NODE_ENV === 'production' ? PRODUCTION_API_URL : 'http://localhost:8000/api/v1';
+    }
+  }
+
   envBase = envBase.trim().replace(/\/+$/, '');
   if (!envBase.endsWith('/api/v1')) {
     envBase = `${envBase}/api/v1`;
