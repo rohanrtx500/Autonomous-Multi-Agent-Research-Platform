@@ -82,7 +82,7 @@ export default function KnowledgeUpload({ onUploadSuccess }: KnowledgeUploadProp
               {uploading ? (
                 <>
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  <span>Processing...</span>
+                  <span>Processing (Indexing into Vector DB)...</span>
                 </>
               ) : (
                 <span>Upload & Index</span>
@@ -90,6 +90,11 @@ export default function KnowledgeUpload({ onUploadSuccess }: KnowledgeUploadProp
             </button>
           )}
         </div>
+        {uploading && (
+          <p className="text-[11px] text-slate-400 animate-pulse pt-1">
+            Extracting text, chunking, and embedding into ChromaDB & BM25...
+          </p>
+        )}
       </div>
 
       {result && (

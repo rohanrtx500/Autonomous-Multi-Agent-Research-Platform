@@ -92,7 +92,12 @@ class VectorStoreService:
                     }
                     for doc in new_docs
                 ]
-                self.collection.add(ids=ids, documents=contents, metadatas=metadatas)
+                batch_size = 100
+                for i in range(0, len(ids), batch_size):
+                    b_ids = ids[i : i + batch_size]
+                    b_contents = contents[i : i + batch_size]
+                    b_metas = metadatas[i : i + batch_size]
+                    self.collection.add(ids=b_ids, documents=b_contents, metadatas=b_metas)
                 logger.info(f"Successfully committed {len(new_docs)} documents to ChromaDB collection.")
             except Exception as e:
                 logger.error(f"Persistence failure in ChromaDB: {e}")

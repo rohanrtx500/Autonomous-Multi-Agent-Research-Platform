@@ -20,7 +20,7 @@ except ImportError:
 
 
 class DocumentLoaderService:
-    def __init__(self, chunk_size: int = 1000, chunk_overlap: int = 200):
+    def __init__(self, chunk_size: int = 1500, chunk_overlap: int = 150):
         self.chunk_size = chunk_size
         self.chunk_overlap = chunk_overlap
 
@@ -130,21 +130,34 @@ class DocumentLoaderService:
         chunks = []
         start = 0
         text_length = len(text)
+        min_advance = max(1, self.chunk_size - self.chunk_overlap)
 
         while start < text_length:
             end = start + self.chunk_size
             if end >= text_length:
-                chunks.append(text[start:].strip())
+                chunk = text[start:].strip()
+                if chunk:
+                    chunks.append(chunk)
                 break
 
-            # Try to break on paragraph or sentence boundary
-            break_point = text.rfind("\n\n", start, end)
-            if break_point == -1 or break_point <= start:
-                break_point = text.rfind(". ", start, end)
-            if break_point == -1 or break_point <= start:
+            # Search for natural boundary in the latter 50% of the window
+            search_start = start + (self.chunk_size // 2)
+            break_point = text.rfind("\n\n", search_start, end)
+            if break_point == -1:
+                break_point = text.rfind(". ", search_start, end)
+                if break_point != -1:
+                    break_point += 1
+            if break_point == -1:
                 break_point = end
 
-            chunks.append(text[start:break_point].strip())
-            start = max(start + 1, break_point - self.chunk_overlap)
+            chunk = text[start:break_point].strip()
+            if chunk:
+                chunks.append(chunk)
 
-        return [c for c in chunks if c]
+            # Guaranteed healthy forward progress
+            next_start = break_point - self.chunk_overlap
+            if next_start <= start:
+                next_start = start + min_advance
+            start = next_start
+
+        return chunks
