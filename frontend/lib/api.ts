@@ -112,32 +112,55 @@ export async function uploadDocument(file: File): Promise<{ filename: string; ch
   const formData = new FormData();
   formData.append('file', file);
 
-  try {
-    const response = await fetch(`${apiBase}/upload`, {
-      method: 'POST',
-      body: formData,
-    });
+  // In browser contexts, try the same-origin Next.js proxy route (/api/upload) first.
+  // This completely eliminates cross-origin browser CORS and TLS preflight blocks.
+  // If running in a non-Next environment or if the proxy fails, fall back to direct backend.
+  const endpoints = typeof window !== 'undefined'
+    ? ['/api/upload', `${apiBase}/upload`]
+    : [`${apiBase}/upload`];
 
-    if (!response.ok) {
-      let errorDetail = `Upload error: HTTP ${response.status}`;
-      try {
-        const errBody = await response.json();
-        if (errBody?.detail) {
-          errorDetail = typeof errBody.detail === 'string' ? errBody.detail : JSON.stringify(errBody.detail);
+  let lastError: any = null;
+
+  for (const endpoint of endpoints) {
+    try {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        let errorDetail = `Upload error: HTTP ${response.status}`;
+        try {
+          const errBody = await response.json();
+          if (errBody?.detail) {
+            errorDetail = typeof errBody.detail === 'string' ? errBody.detail : JSON.stringify(errBody.detail);
+          }
+        } catch {
+          // ignore
         }
-      } catch {
-        // ignore
+        // If the same-origin route returned 404 or 502, try the next endpoint
+        if (response.status === 404 || response.status === 502) {
+          lastError = new Error(errorDetail);
+          continue;
+        }
+        throw new Error(errorDetail);
       }
-      throw new Error(errorDetail);
-    }
 
-    return await response.json();
-  } catch (err: any) {
-    if (err.name === 'TypeError' || err.message === 'Failed to fetch' || err.message?.includes('Failed to fetch')) {
+      return await response.json();
+    } catch (err: any) {
+      lastError = err;
+      continue;
+    }
+  }
+
+  if (lastError) {
+    if (lastError.name === 'TypeError' || lastError.message === 'Failed to fetch' || lastError.message?.includes('Failed to fetch')) {
       throw new Error(`Could not connect to ${apiBase}/upload. Please verify your backend server is awake and reachable.`);
     }
-    throw err;
+    throw lastError;
   }
+
+  throw new Error('Upload failed: unknown error.');
 }
 
 export async function fetchMetrics(): Promise<any> {

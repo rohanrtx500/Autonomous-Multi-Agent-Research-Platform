@@ -29,6 +29,7 @@ app.add_middleware(
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 
@@ -65,6 +66,19 @@ async def request_context_middleware(request: Request, call_next):
 
 
 app.include_router(api_v1_router, prefix=settings.API_V1_STR)
+
+
+@app.options("/{full_path:path}")
+async def preflight_fallback_handler(full_path: str):
+    """Fallback handler for CORS preflight OPTIONS requests across all routes."""
+    return Response(
+        status_code=200,
+        headers={
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "*",
+            "Access-Control-Allow-Headers": "*",
+        },
+    )
 
 
 @app.get("/")
